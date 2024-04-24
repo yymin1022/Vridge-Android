@@ -2,48 +2,68 @@ package com.gdsc_cau.vridge.ui.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.gdsc_cau.vridge.data.models.User
 import com.gdsc_cau.vridge.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ProfileViewModel @Inject constructor(private val repository: UserRepository) : ViewModel() {
-    private val _user = MutableStateFlow(User())
-    val user: StateFlow<User> = _user.asStateFlow()
+class ProfileViewModel @Inject constructor(
+    private val repository: UserRepository
+) : ViewModel() {
 
-    private val _isLoggedOut = MutableStateFlow(false)
-    val isLoggedOut: StateFlow<Boolean> = _isLoggedOut
+    private val _errorFlow = MutableSharedFlow<Throwable>()
+    val errorFlow: SharedFlow<Throwable> get() = _errorFlow
+
+    private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
+    val uiState: StateFlow<ProfileUiState> = _uiState
 
     init {
-        getUserInfo()
-    }
-
-    fun getUserInfo() {
         viewModelScope.launch {
-            try {
-                _user.emit(repository.getUserInfo(repository.getUid()))
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            flow {
+                emit(repository.getUserInfo())
+            }.map { user ->
+                ProfileUiState.Success(
+                    user = user,
+                    isLoggedOut = false
+                )
+            }.catch { throwable ->
+                _errorFlow.emit(throwable)
+            }.collect { _uiState.value = it }
         }
     }
 
     fun signOut() {
-        repository.signOut()
-        _isLoggedOut.value = true
+        viewModelScope.launch {
+            val state = _uiState.value
+            if (state !is ProfileUiState.Success) return@launch
+            repository.signOut()
+
+            _uiState.value = state.copy(
+                user = state.user.copy(),
+                isLoggedOut = true
+            )
+        }
     }
 
     fun unregister() {
         viewModelScope.launch {
-            val result = repository.unregister(repository.getUid())
-            if (result) {
-                _isLoggedOut.value = true
-            }
+            val state = _uiState.value
+            if (state !is ProfileUiState.Success) return@launch
+
+            if (repository.unregister().not()) return@launch
+
+            _uiState.value = state.copy(
+                user = state.user.copy(),
+                isLoggedOut = true
+            )
         }
     }
 }
