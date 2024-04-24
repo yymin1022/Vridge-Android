@@ -42,8 +42,11 @@ class MainActivity : ComponentActivity() {
         requestPermissionLauncher.launch(permissions)
 
         setContent {
+            val navigator: MainNavigator = rememberMainNavigator()
             VridgeTheme {
-                MainScreen()
+                MainScreen(
+                    navigator = navigator
+                )
             }
         }
     }
