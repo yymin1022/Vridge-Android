@@ -5,29 +5,54 @@ import androidx.lifecycle.viewModelScope
 import com.gdsc_cau.vridge.data.models.Voice
 import com.gdsc_cau.vridge.data.repository.VoiceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class VoiceListViewModel @Inject constructor(private val repository: VoiceRepository) : ViewModel() {
-    private val _voiceList = MutableStateFlow<List<Voice>>(emptyList())
-    val voiceList: StateFlow<List<Voice>> = _voiceList
+class VoiceListViewModel @Inject constructor(
+    private val repository: VoiceRepository
+) : ViewModel() {
+
+    private val _errorFlow = MutableSharedFlow<Throwable>()
+    val errorFlow: SharedFlow<Throwable> get() = _errorFlow
+
+    private val _uiState = MutableStateFlow<VoiceListUiState>(VoiceListUiState.Loading)
+    val uiState: StateFlow<VoiceListUiState> = _uiState
 
     init {
-        getVoices()
-    }
-    fun getVoices() {
         viewModelScope.launch {
-            _voiceList.emit(repository.getVoiceList())
+            flow {
+                emit(repository.getVoiceList())
+            }.map { voiceList ->
+                VoiceListUiState.Success(
+                    voiceList = voiceList
+                )
+            }.catch { throwable ->
+                _errorFlow.emit(throwable)
+            }.collect { _uiState.value = it }
         }
     }
 
-    fun synthesize(voiceList: List<String>) {
+    fun synthesize(voiceList: List<String>, name: String) {
         viewModelScope.launch {
-            repository.synthesize(voiceList)
+            val state = _uiState.value
+            val synthVoiceId = repository.synthesize(voiceList)
+
+            if (state !is VoiceListUiState.Success) return@launch
+
+            _uiState.value = VoiceListUiState.Success(
+                voiceList = state.voiceList + Voice(
+                    id = synthVoiceId,
+                    name = name
+                )
+            )
         }
     }
-
 }
