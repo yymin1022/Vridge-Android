@@ -7,7 +7,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gdsc_cau.vridge.data.repository.VoiceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -33,6 +35,12 @@ class RecordViewModel @Inject constructor(
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
+
+    private val _errorFlow = MutableSharedFlow<Throwable>()
+    val errorFlow: SharedFlow<Throwable> get() = _errorFlow
+
+    private val _uiState = MutableStateFlow<RecordUiState>(RecordUiState.Loading)
+    val uiState: StateFlow<RecordUiState> = _uiState
 
     private var recorder: MediaRecorder? = null
     private var player: MediaPlayer? = null
@@ -118,11 +126,10 @@ class RecordViewModel @Inject constructor(
 
             try {
                 prepare()
+                start()
             } catch (e: Exception) {
                 Log.e(LOG_TAG, "prepare() failed")
             }
-
-            start()
         }
     }
 
