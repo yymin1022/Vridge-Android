@@ -55,7 +55,11 @@ import com.gdsc_cau.vridge.ui.util.TopBarType
 import com.gdsc_cau.vridge.ui.util.VridgeTopBar
 
 @Composable
-fun RecordScreen(onBackClick: () -> Unit, viewModel: RecordViewModel = hiltViewModel()) {
+fun RecordScreen(
+    onBackClick: () -> Unit,
+    onShowErrorSnackBar: (Throwable?) -> Unit,
+    viewModel: RecordViewModel = hiltViewModel()
+) {
     val index = viewModel.recordIndex.collectAsStateWithLifecycle().value
     val text = viewModel.recordText.collectAsStateWithLifecycle().value
     val isRecorded = viewModel.isRecorded.collectAsStateWithLifecycle().value
