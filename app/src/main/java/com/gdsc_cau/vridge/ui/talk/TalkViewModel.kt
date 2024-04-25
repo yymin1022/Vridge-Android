@@ -9,31 +9,52 @@ import androidx.lifecycle.viewModelScope
 import com.gdsc_cau.vridge.data.models.Tts
 import com.gdsc_cau.vridge.data.repository.TalkRepository
 import com.gdsc_cau.vridge.ui.record.LOG_TAG
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.io.IOException
 import javax.inject.Inject
 
-@HiltViewModel
-class TalkViewModel @Inject constructor(private val repository: TalkRepository) : ViewModel() {
-    private val _talks = MutableStateFlow<List<Tts>>(emptyList())
+@HiltViewModel(assistedFactory = TalkViewModel.TalkViewModelFactory::class)
+class TalkViewModel @AssistedInject constructor(
+    @Assisted private val vid: String,
+    private val repository: TalkRepository
+) : ViewModel() {
+    @AssistedFactory
+    interface TalkViewModelFactory {
+        fun create(vid: String): TalkViewModel
+    }
 
-    val talks: StateFlow<List<Tts>>
-        get() = _talks
+    private val _uiState = MutableStateFlow<TalkUiState>(TalkUiState.Loading)
+    val uiState: StateFlow<TalkUiState> = _uiState
+
+    private val _errorFlow = MutableSharedFlow<Throwable>()
+    val errorFlow: SharedFlow<Throwable> get() = _errorFlow
 
     private var player: MediaPlayer? = null
 
-    lateinit var vid: String
-        private set
-
-    fun setVid(vid: String) {
-        this.vid = vid
+    init {
+        viewModelScope.launch {
+            flow {
+                emit(repository.getTalks(vid))
+            }.map { talks ->
+                TalkUiState.Success(talks)
+            }.catch { throwable ->
+                _errorFlow.emit(throwable)
+            }.collect { _uiState.value = it }
+        }
     }
 
     fun onPlay(start: Boolean, ttsId: String = "") = if (start) {
@@ -72,18 +93,6 @@ class TalkViewModel @Inject constructor(private val repository: TalkRepository) 
     fun createTts(text: String) {
         viewModelScope.launch {
             repository.createTts(text, vid)
-        }
-    }
-
-    fun getTalks() {
-        viewModelScope.launch {
-            _talks.emit(repository.getTalks(vid))
-        }
-    }
-
-    fun getTtsState(ttsId: String) = flow {
-        viewModelScope.launch {
-            this@flow.emit(repository.getTtsState(vid, ttsId))
         }
     }
 }
