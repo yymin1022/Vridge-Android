@@ -4,4 +4,5 @@ data class Tts(
     val id: String,
     val text: String,
     val timestamp: Long,
+    val state: Boolean = false
 )
