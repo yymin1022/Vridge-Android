@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
@@ -29,10 +30,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.gdsc_cau.vridge.ui.theme.OnPrimary
+import com.gdsc_cau.vridge.ui.theme.OnPrimaryLight
 import com.gdsc_cau.vridge.ui.theme.Primary
 import com.gdsc_cau.vridge.ui.theme.PrimaryDark
 import com.gdsc_cau.vridge.ui.theme.PrimaryLight
@@ -41,16 +44,20 @@ import com.gdsc_cau.vridge.ui.theme.PrimaryLight
 fun VoiceSettingDialog(
     isShowingDialog: Boolean,
     onConfirmRequest: () -> Unit,
+    onDismissRequest: () -> Unit,
     text: String,
     onTextChanged: (String) -> Unit,
     sliderPosition: Float,
     onSliderChanged: (Float) -> Unit,
     dismissOnBackPress: Boolean = true,
-    dismissOnClickOutside: Boolean = false
+    dismissOnClickOutside: Boolean = true
 ) {
     if (isShowingDialog) {
         Dialog(
-            onDismissRequest = { },
+            onDismissRequest = {
+                onDismissRequest()
+                return@Dialog
+            },
             DialogProperties(
                 dismissOnBackPress = dismissOnBackPress,
                 dismissOnClickOutside = dismissOnClickOutside
@@ -62,7 +69,10 @@ fun VoiceSettingDialog(
                 sliderPosition = sliderPosition,
                 onSliderChanged = onSliderChanged,
                 onConfirmRequest = onConfirmRequest,
-                onDismissRequest = { return@DialogContent }
+                onDismissRequest = {
+                    onDismissRequest()
+                    return@DialogContent
+                }
             )
         }
     }
@@ -87,7 +97,7 @@ fun DialogContent(
             )
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceEvenly
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
         OutlinedTextField(
             label = { Text("Voice Name") },
@@ -117,14 +127,34 @@ fun DialogContent(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Button(onClick = onDismissRequest) {
-                Text("Cancel", color = OnPrimary)
+            Button(
+                onClick = onDismissRequest,
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryLight)) {
+                Text("Cancel", color = OnPrimaryLight)
             }
             Button(onClick = {
                 onConfirmRequest()
-            }, enabled = text != "", modifier = Modifier.padding(start = 16.dp)) {
+            }, enabled = text != "",
+                modifier = Modifier.padding(start = 16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Primary)) {
                 Text("Confirm", color = OnPrimary)
             }
         }
     }
+}
+
+@Composable
+@Preview
+fun VoiceSettingDialogPreview() {
+    var text by remember { mutableStateOf("Voice Name") }
+    var sliderPosition by remember { mutableFloatStateOf(0f) }
+    VoiceSettingDialog(
+        isShowingDialog = true,
+        onConfirmRequest = { },
+        onDismissRequest = { },
+        text = text,
+        onTextChanged = { text = it },
+        sliderPosition = sliderPosition,
+        onSliderChanged = { sliderPosition = it }
+    )
 }
