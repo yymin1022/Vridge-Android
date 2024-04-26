@@ -31,6 +31,9 @@ class VoiceListViewModel @Inject constructor(
             flow {
                 emit(repository.getVoiceList())
             }.map { voiceList ->
+                if (voiceList.isEmpty())
+                    VoiceListUiState.Empty
+                else
                 VoiceListUiState.Success(
                     voiceList = voiceList
                 )
