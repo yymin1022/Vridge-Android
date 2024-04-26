@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -27,6 +28,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -44,7 +46,6 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieAnimatable
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.gdsc_cau.vridge.R
-import com.gdsc_cau.vridge.ui.main.MainNavigator
 import com.gdsc_cau.vridge.ui.theme.Black
 import com.gdsc_cau.vridge.ui.theme.Grey2
 import com.gdsc_cau.vridge.ui.theme.Grey4
@@ -53,21 +54,54 @@ import com.gdsc_cau.vridge.ui.theme.White
 import com.gdsc_cau.vridge.ui.util.LoadingDialog
 import com.gdsc_cau.vridge.ui.util.TopBarType
 import com.gdsc_cau.vridge.ui.util.VridgeTopBar
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-fun RecordScreen(
+fun RecordRoute(
     onBackClick: () -> Unit,
     onShowErrorSnackBar: (Throwable?) -> Unit,
     viewModel: RecordViewModel = hiltViewModel()
 ) {
-    val index = viewModel.recordIndex.collectAsStateWithLifecycle().value
-    val text = viewModel.recordText.collectAsStateWithLifecycle().value
-    val isRecorded = viewModel.isRecorded.collectAsStateWithLifecycle().value
-    val finished = viewModel.finished.collectAsStateWithLifecycle().value
-    val isLoading = viewModel.isLoading.collectAsStateWithLifecycle().value
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    viewModel.setFileName(LocalContext.current.externalCacheDir?.absolutePath ?: "")
 
-    val fileName = LocalContext.current.externalCacheDir?.absolutePath ?: ""
+    when (uiState) {
+        is RecordUiState.Loading -> {
+            CircularProgressIndicator()
+        }
 
+        is RecordUiState.Success -> {
+            RecordScreen(
+                uiState as RecordUiState.Success,
+                onBackClick,
+                viewModel::getNext,
+                viewModel::startRecord,
+                viewModel::stopRecord,
+                viewModel::startPlay,
+                viewModel::stopPlay,
+                viewModel::finishRecord
+            )
+        }
+    }
+
+    LaunchedEffect(true) {
+        viewModel.errorFlow.collectLatest {
+            onShowErrorSnackBar(it)
+        }
+    }
+}
+
+@Composable
+fun RecordScreen(
+    uiState: RecordUiState.Success,
+    onBackClick: () -> Unit,
+    onClickNext: () -> Unit,
+    onStartRecord: (MediaRecorder) -> Unit,
+    onStopRecord: () -> Unit,
+    onStartPlay: () -> Unit,
+    onStopPlay: () -> Unit,
+    onFinishRecord: (String, Float) -> Unit
+) {
     val recordingStatus = rememberSaveable {
         mutableStateOf(false)
     }
@@ -90,8 +124,15 @@ fun RecordScreen(
         Modifier
             .fillMaxSize()
     ) {
-        VridgeTopBar(title = "Voice Recording", type = TopBarType.CLOSE, onBackClick = onBackClick)
-        RecordDataView(idx = if (index <= viewModel.scriptSize) "$index / ${viewModel.scriptSize}" else "", data = text)
+        VridgeTopBar(
+            title = "Voice Recording",
+            type = TopBarType.CLOSE,
+            onBackClick = onBackClick
+        )
+        RecordDataView(
+            idx = "${uiState.index} / ${uiState.size}",
+            data = uiState.text
+        )
         Box(
             modifier =
             Modifier
@@ -99,35 +140,31 @@ fun RecordScreen(
                 .weight(1f)
         ) {
             RecordButton(recordingStatus) {
-                viewModel.onRecord(it, recorder)
-
+                if (it) onStartRecord(recorder) else onStopRecord()
             }
         }
         RecordNavigator(
             playingStatus,
-            isRecorded,
-            index == viewModel.scriptSize,
-            { viewModel.onPlay(it) }
-        ) {
-            viewModel.getNextText()
-        }
-        LoadingDialog(isLoading)
+            uiState.state == RecordState.RECORDED,
+            uiState.state == RecordState.RECORDED && uiState.index == uiState.size,
+            { if (it) onStartPlay() else onStopPlay() },
+            onClickNext
+        )
+        LoadingDialog(isShowingDialog = uiState.state == RecordState.LOADING)
         VoiceSettingDialog(
-            isShowingDialog = (index == viewModel.scriptSize + 1),
-            text = voiceName,
-            sliderPosition = sliderPosition,
+            isShowingDialog = (uiState.state == RecordState.RECORDED && uiState.index == uiState.size),
+            text = voiceName.value,
+            onTextChanged = { voiceName.value = it },
+            sliderPosition = sliderPosition.floatValue,
+            onSliderChanged = { sliderPosition.floatValue = it },
             onConfirmRequest = {
-                viewModel.confirmVoice(voiceName.value, sliderPosition.floatValue)
+                onFinishRecord(voiceName.value, sliderPosition.floatValue)
             }
         )
     }
 
-    LaunchedEffect(key1 = fileName) {
-        viewModel.setFileName(fileName)
-    }
-
-    LaunchedEffect(key1 = finished) {
-        if (finished) {
+    LaunchedEffect(uiState.state) {
+        if (uiState.state == RecordState.FINISHED) {
             onBackClick()
         }
     }
@@ -297,7 +334,7 @@ fun RecordNavigateButton(text: String, clickable: Boolean, onBtnClicked: () -> U
         Modifier
             .padding(all = 20.dp)
             .width(150.dp),
-        onClick = onBtnClicked
+        onClick = { if (clickable) onBtnClicked() }
     ) {
         Text(
             modifier = Modifier,
@@ -305,4 +342,14 @@ fun RecordNavigateButton(text: String, clickable: Boolean, onBtnClicked: () -> U
             text = text
         )
     }
+}
+
+enum class RecordState {
+    IDLE,
+    RECORDING,
+    RECORDED,
+    PLAYING,
+    LOADING,
+    FINISHING,
+    FINISHED
 }
