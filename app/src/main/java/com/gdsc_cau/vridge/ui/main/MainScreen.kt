@@ -43,7 +43,10 @@ fun MainScreen(
         coroutineScope.launch {
             val message = when (throwable) {
                 is UnknownHostException -> localContextResource.getString(R.string.error_message_network)
-                else -> localContextResource.getString(R.string.error_message_unknown)
+                else -> {
+                    if (throwable?.message != null) localContextResource.getString(R.string.error_message_unknown) + "\n" + throwable.message
+                    else { localContextResource.getString(R.string.error_message_unknown) }
+                }
             }
             snackBarHostState.showSnackbar(message)
         }
