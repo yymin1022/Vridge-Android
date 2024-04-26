@@ -3,19 +3,13 @@ package com.gdsc_cau.vridge.ui.talk
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.util.Log
-import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.gdsc_cau.vridge.data.models.Tts
 import com.gdsc_cau.vridge.data.repository.TalkRepository
-import com.gdsc_cau.vridge.ui.record.LOG_TAG
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -25,7 +19,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.io.IOException
-import javax.inject.Inject
 
 @HiltViewModel(assistedFactory = TalkViewModel.TalkViewModelFactory::class)
 class TalkViewModel @AssistedInject constructor(
@@ -79,7 +72,7 @@ class TalkViewModel @AssistedInject constructor(
                     prepare()
                     start()
                 } catch (e: IOException) {
-                    Log.e(LOG_TAG, "prepare() failed")
+                    _errorFlow.emit(e)
                 }
             }
         }
