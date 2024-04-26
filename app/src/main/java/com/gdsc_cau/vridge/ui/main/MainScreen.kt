@@ -72,7 +72,7 @@ fun MainScreen(
                         )
                     }
                     composable(RecordRoute.route) {
-                        RecordScreen(
+                        RecordRoute(
                             onBackClick = { navigator.popBackStackIfNotHome() },
                             onShowErrorSnackBar = onShowErrorSnackBar
                         )
