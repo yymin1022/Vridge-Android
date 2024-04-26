@@ -117,8 +117,10 @@ class RecordViewModel @Inject constructor(
 
     fun stopPlay() {
         viewModelScope.launch {
+            player?.stop()
             player?.release()
             player = null
+            _recordState.emit(RecordState.RECORDED)
         }
     }
 
@@ -128,6 +130,7 @@ class RecordViewModel @Inject constructor(
             if (uiState.value is RecordUiState.Success) {
                 uiState.value.let {
                     if (index == size) {
+                        _recordState.emit(RecordState.FINISHING)
                         return@launch
                     }
                 }
