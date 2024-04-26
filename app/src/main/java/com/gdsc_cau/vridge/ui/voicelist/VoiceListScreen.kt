@@ -20,11 +20,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -45,23 +48,45 @@ import com.gdsc_cau.vridge.ui.theme.Primary
 import com.gdsc_cau.vridge.ui.theme.White
 import com.gdsc_cau.vridge.ui.util.TopBarType
 import com.gdsc_cau.vridge.ui.util.VridgeTopBar
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun VoiceListScreen(
     padding: PaddingValues,
     onVoiceClick: (Voice) -> Unit,
     onRecordClick: () -> Unit,
+    onShowErrorSnackBar: (Throwable?) -> Unit,
     viewModel: VoiceListViewModel = hiltViewModel()
 ) {
-    val voices = viewModel.voiceList.collectAsStateWithLifecycle().value
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     Box(modifier = Modifier.fillMaxSize()) {
-        if (voices.isEmpty()) {
-            VridgeTopBar(title = "Make your voice", type = TopBarType.NONE)
-            EmptyVoiceList(onRecordClick)
-        } else {
-            VridgeTopBar(title = "Choose your voice", type = TopBarType.NONE)
-            GridVoiceList(voices, onRecordClick, { viewModel.synthesize(it) }, onVoiceClick)
+        when (uiState) {
+            is VoiceListUiState.Loading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            is VoiceListUiState.Empty -> {
+                VridgeTopBar(title = "Make your voice", type = TopBarType.NONE)
+                EmptyVoiceList(onRecordClick)
+            }
+
+            is VoiceListUiState.Success -> {
+                VridgeTopBar(title = "Choose your voice", type = TopBarType.NONE)
+                GridVoiceList(
+                    (uiState as VoiceListUiState.Success).voiceList,
+                    onRecordClick,
+                    { list, name -> viewModel.synthesize(list, name) },
+                    onVoiceClick
+                )
+            }
         }
+    }
+
+    LaunchedEffect(true) {
+        viewModel.errorFlow.collectLatest { throwable -> onShowErrorSnackBar(throwable) }
     }
 }
 
@@ -93,7 +118,7 @@ fun EmptyVoiceList(onRecordClick: () -> Unit) {
 fun GridVoiceList(
     voices: List<Voice>,
     onRecordClick: () -> Unit,
-    onSynthClick: (List<String>) -> Unit,
+    onSynthClick: (List<String>, String) -> Unit,
     onVoiceClick: (Voice) -> Unit
 ) {
     val selectedIds = rememberSaveable { mutableStateOf(emptySet<String>()) }
@@ -123,18 +148,14 @@ fun GridVoiceList(
                 val selected = selectedIds.value.contains(voices[index].id)
                 VoiceListItem(
                     voices[index],
-                    inSelectionMode.value,
                     selected,
                     Modifier.clickable {
                         if (inSelectionMode.value) {
-                            selectedIds.value =
-                                if (selected) {
-                                    selectedIds.value.minus(voices[index].id)
-                                } else if (selectedIds.value.size < 2) {
-                                    selectedIds.value.plus(voices[index].id)
-                                } else {
-                                    selectedIds.value
-                                }
+                            if (selected) {
+                                selectedIds.value -= voices[index].id
+                            } else if (selectedIds.value.size < 2) {
+                                selectedIds.value += voices[index].id
+                            }
                         } else {
                             onVoiceClick(voices[index])
                         }
@@ -145,14 +166,13 @@ fun GridVoiceList(
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
-            modifier =
-            Modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
         ) {
             if (inSelectionMode.value) {
                 Button(
-                    onClick = { onSynthClick(selectedIds.value.toList()) },
+                    onClick = { onSynthClick(selectedIds.value.toList(), "") },
                     elevation = ButtonDefaults.buttonElevation(4.dp),
                     modifier = Modifier.padding(horizontal = 8.dp)
                 ) {
@@ -198,19 +218,17 @@ fun GridVoiceList(
 @Composable
 fun VoiceListItem(
     voice: Voice,
-    inSelectionMode: Boolean,
     selected: Boolean,
     modifier: Modifier
 ) {
     Card(
-        modifier =
-        modifier
+        modifier = modifier
             .padding(8.dp)
             .aspectRatio(1f),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp, pressedElevation = 2.dp)
     ) {
         Surface {
-            if (inSelectionMode && selected) {
+            if (selected) {
                 Icon(
                     Icons.Filled.Check,
                     contentDescription = null,

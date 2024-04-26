@@ -18,4 +18,7 @@
     <string name="record_btn_play">Play</string>
     <string name="record_btn_stop">Stop</string>
     <string name="record_btn_finish">Finish</string>
+
+    <string name="error_message_network">Network issue occurred.</string>
+    <string name="error_message_unknown">Unknown error occurred.</string>
 </resources>

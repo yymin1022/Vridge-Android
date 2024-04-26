@@ -2,6 +2,7 @@ package com.gdsc_cau.vridge.ui.record
 
 import android.media.MediaRecorder
 import android.os.Build
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -27,12 +29,15 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -44,7 +49,6 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieAnimatable
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.gdsc_cau.vridge.R
-import com.gdsc_cau.vridge.ui.main.MainNavigator
 import com.gdsc_cau.vridge.ui.theme.Black
 import com.gdsc_cau.vridge.ui.theme.Grey2
 import com.gdsc_cau.vridge.ui.theme.Grey4
@@ -53,17 +57,62 @@ import com.gdsc_cau.vridge.ui.theme.White
 import com.gdsc_cau.vridge.ui.util.LoadingDialog
 import com.gdsc_cau.vridge.ui.util.TopBarType
 import com.gdsc_cau.vridge.ui.util.VridgeTopBar
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-fun RecordScreen(onBackClick: () -> Unit, viewModel: RecordViewModel = hiltViewModel()) {
-    val index = viewModel.recordIndex.collectAsStateWithLifecycle().value
-    val text = viewModel.recordText.collectAsStateWithLifecycle().value
-    val isRecorded = viewModel.isRecorded.collectAsStateWithLifecycle().value
-    val finished = viewModel.finished.collectAsStateWithLifecycle().value
-    val isLoading = viewModel.isLoading.collectAsStateWithLifecycle().value
+fun RecordRoute(
+    onBackClick: () -> Unit,
+    onShowErrorSnackBar: (Throwable?) -> Unit,
+    viewModel: RecordViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    viewModel.setFileName(LocalContext.current.externalCacheDir?.absolutePath ?: "")
 
-    val fileName = LocalContext.current.externalCacheDir?.absolutePath ?: ""
+    val recorder = if (Build.VERSION_CODES.S <= Build.VERSION.SDK_INT) {
+        MediaRecorder(LocalContext.current)
+    } else {
+        MediaRecorder()
+    }
 
+    when (uiState) {
+        is RecordUiState.Loading -> {
+            CircularProgressIndicator()
+        }
+
+        is RecordUiState.Success -> {
+            RecordScreen(
+                uiState as RecordUiState.Success,
+                recorder,
+                onBackClick,
+                viewModel::getNext,
+                viewModel::startRecord,
+                viewModel::stopRecord,
+                viewModel::startPlay,
+                viewModel::stopPlay,
+                viewModel::finishRecord
+            )
+        }
+    }
+
+    LaunchedEffect(true) {
+        viewModel.errorFlow.collectLatest {
+            onShowErrorSnackBar(it)
+        }
+    }
+}
+
+@Composable
+fun RecordScreen(
+    uiState: RecordUiState.Success,
+    recorder: MediaRecorder?,
+    onBackClick: () -> Unit,
+    onClickNext: () -> Unit,
+    onStartRecord: (MediaRecorder) -> Unit,
+    onStopRecord: () -> Unit,
+    onStartPlay: () -> Unit,
+    onStopPlay: () -> Unit,
+    onFinishRecord: (String, Float) -> Unit
+) {
     val recordingStatus = rememberSaveable {
         mutableStateOf(false)
     }
@@ -75,19 +124,21 @@ fun RecordScreen(onBackClick: () -> Unit, viewModel: RecordViewModel = hiltViewM
     val voiceName = remember { mutableStateOf("") }
     val sliderPosition = remember { mutableFloatStateOf(-6f) }
 
-    val recorder = if (Build.VERSION_CODES.S <= Build.VERSION.SDK_INT) {
-        MediaRecorder(LocalContext.current)
-    } else {
-        MediaRecorder()
-    }
-
     Column(
         modifier =
         Modifier
-            .fillMaxSize()
+            .fillMaxSize().background(White),
+
     ) {
-        VridgeTopBar(title = "Voice Recording", type = TopBarType.CLOSE, onBackClick = onBackClick)
-        RecordDataView(idx = if (index <= viewModel.scriptSize) "$index / ${viewModel.scriptSize}" else "", data = text)
+        VridgeTopBar(
+            title = "Voice Recording",
+            type = TopBarType.CLOSE,
+            onBackClick = onBackClick
+        )
+        RecordDataView(
+            idx = "${uiState.index} / ${uiState.size}",
+            data = uiState.text
+        )
         Box(
             modifier =
             Modifier
@@ -95,35 +146,32 @@ fun RecordScreen(onBackClick: () -> Unit, viewModel: RecordViewModel = hiltViewM
                 .weight(1f)
         ) {
             RecordButton(recordingStatus) {
-                viewModel.onRecord(it, recorder)
-
+                if (it && recorder != null) onStartRecord(recorder) else onStopRecord()
             }
         }
         RecordNavigator(
             playingStatus,
-            isRecorded,
-            index == viewModel.scriptSize,
-            { viewModel.onPlay(it) }
-        ) {
-            viewModel.getNextText()
-        }
-        LoadingDialog(isLoading)
+            uiState.state == RecordState.RECORDED,
+            uiState.state == RecordState.RECORDED && uiState.index == uiState.size,
+            { if (it) onStartPlay() else onStopPlay() },
+            onClickNext
+        )
+        LoadingDialog(isShowingDialog = uiState.state == RecordState.LOADING)
         VoiceSettingDialog(
-            isShowingDialog = (index == viewModel.scriptSize + 1),
-            text = voiceName,
-            sliderPosition = sliderPosition,
+            isShowingDialog = uiState.state == RecordState.FINISHING,
+            text = voiceName.value,
+            onTextChanged = { voiceName.value = it },
+            sliderPosition = sliderPosition.floatValue,
+            onSliderChanged = { sliderPosition.floatValue = it },
             onConfirmRequest = {
-                viewModel.confirmVoice(voiceName.value, sliderPosition.floatValue)
-            }
+                onFinishRecord(voiceName.value, sliderPosition.floatValue)
+            },
+            onDismissRequest = onStopPlay
         )
     }
 
-    LaunchedEffect(key1 = fileName) {
-        viewModel.setFileName(fileName)
-    }
-
-    LaunchedEffect(key1 = finished) {
-        if (finished) {
+    LaunchedEffect(uiState.state) {
+        if (uiState.state == RecordState.FINISHED) {
             onBackClick()
         }
     }
@@ -293,7 +341,7 @@ fun RecordNavigateButton(text: String, clickable: Boolean, onBtnClicked: () -> U
         Modifier
             .padding(all = 20.dp)
             .width(150.dp),
-        onClick = onBtnClicked
+        onClick = { if (clickable) onBtnClicked() }
     ) {
         Text(
             modifier = Modifier,
@@ -301,4 +349,140 @@ fun RecordNavigateButton(text: String, clickable: Boolean, onBtnClicked: () -> U
             text = text
         )
     }
+}
+
+@Preview
+@Composable
+fun RecordScreenIdlePreview() {
+    RecordScreen(
+        uiState = RecordUiState.Success(
+            text = "Hello, World!",
+            index = 1,
+            size = 3,
+            state = RecordState.IDLE
+        ),
+        recorder = null,
+        onBackClick = {},
+        onClickNext = {},
+        onStartRecord = {},
+        onStopRecord = {},
+        onStartPlay = {},
+        onStopPlay = {},
+        onFinishRecord = { _, _ -> }
+    )
+}
+
+@Preview
+@Composable
+fun RecordScreenRecordedDonePreview() {
+    RecordScreen(
+        uiState = RecordUiState.Success(
+            text = "Hello, World!",
+            index = 3,
+            size = 3,
+            state = RecordState.RECORDED
+        ),
+        recorder = null,
+        onBackClick = {},
+        onClickNext = {},
+        onStartRecord = {},
+        onStopRecord = {},
+        onStartPlay = {},
+        onStopPlay = {},
+        onFinishRecord = { _, _ -> }
+    )
+}
+
+@Preview
+@Composable
+fun RecordScreenRecordedPreview() {
+    RecordScreen(
+        uiState = RecordUiState.Success(
+            text = "Hello, World!",
+            index = 1,
+            size = 3,
+            state = RecordState.RECORDED
+        ),
+        recorder = null,
+        onBackClick = {},
+        onClickNext = {},
+        onStartRecord = {},
+        onStopRecord = {},
+        onStartPlay = {},
+        onStopPlay = {},
+        onFinishRecord = { _, _ -> }
+    )
+}
+
+@Preview
+@Composable
+fun RecordScreenPlayingPreview() {
+    RecordScreen(
+        uiState = RecordUiState.Success(
+            text = "Hello, World!",
+            index = 1,
+            size = 3,
+            state = RecordState.PLAYING
+        ),
+        recorder = null,
+        onBackClick = {},
+        onClickNext = {},
+        onStartRecord = {},
+        onStopRecord = {},
+        onStartPlay = {},
+        onStopPlay = {},
+        onFinishRecord = { _, _ -> }
+    )
+}
+
+@Preview
+@Composable
+fun RecordScreenLoadingPreview() {
+    RecordScreen(
+        uiState = RecordUiState.Success(
+            text = "Hello, World!",
+            index = 1,
+            size = 3,
+            state = RecordState.LOADING
+        ),
+        recorder = null,
+        onBackClick = {},
+        onClickNext = {},
+        onStartRecord = {},
+        onStopRecord = {},
+        onStartPlay = {},
+        onStopPlay = {},
+        onFinishRecord = { _, _ -> }
+    )
+}
+
+@Preview
+@Composable
+fun RecordScreenFinishPreview() {
+    RecordScreen(
+        uiState = RecordUiState.Success(
+            text = "Hello, World!",
+            index = 3,
+            size = 3,
+            state = RecordState.FINISHING
+        ),
+        recorder = null,
+        onBackClick = {},
+        onClickNext = {},
+        onStartRecord = {},
+        onStopRecord = {},
+        onStartPlay = {},
+        onStopPlay = {},
+        onFinishRecord = { _, _ -> }
+    )
+}
+
+enum class RecordState {
+    IDLE,
+    RECORDING,
+    RECORDED,
+    PLAYING,
+    LOADING,
+    FINISHING,
+    FINISHED
 }

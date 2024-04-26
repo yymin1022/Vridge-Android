@@ -18,12 +18,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +47,7 @@ import com.gdsc_cau.vridge.ui.theme.PrimaryUpperLight
 import com.gdsc_cau.vridge.ui.theme.White
 import com.gdsc_cau.vridge.ui.util.TopBarType
 import com.gdsc_cau.vridge.ui.util.VridgeTopBar
+import kotlinx.coroutines.flow.collectLatest
 
 enum class VoiceState {
     VOICE_LOADING,
@@ -56,18 +59,35 @@ enum class VoiceState {
 fun TalkScreen(
     voiceId: String,
     onBackClick: () -> Unit,
-    viewModel: TalkViewModel = hiltViewModel()
+    onShowErrorSnackBar: (Throwable?) -> Unit,
 ) {
-    viewModel.setVid(voiceId)
+    val viewModel: TalkViewModel = hiltViewModel<TalkViewModel, TalkViewModel.TalkViewModelFactory> { factory ->
+        factory.create(voiceId)
+    }
 
-    val talks = viewModel.talks.collectAsStateWithLifecycle().value
-    viewModel.getTalks()
-    Box(modifier = Modifier.fillMaxSize()) {
-        VridgeTopBar(title = "", type = TopBarType.BACK, onBackClick = onBackClick)
-        TalkHistory(talks, viewModel)
-        TalkInput(onSendClicked = {
-            viewModel.createTts(it)
-        })
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    when (uiState) {
+        is TalkUiState.Loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+        is TalkUiState.Success -> {
+            Box(modifier = Modifier.fillMaxSize()) {
+                VridgeTopBar(title = "", type = TopBarType.BACK, onBackClick = onBackClick)
+                TalkHistory((uiState as TalkUiState.Success).talks, viewModel)
+                TalkInput(onSendClicked = {
+                    viewModel.createTts(it)
+                })
+            }
+        }
+    }
+
+
+
+    LaunchedEffect(true) {
+        viewModel.errorFlow.collectLatest { throwable -> onShowErrorSnackBar(throwable) }
     }
 }
 
@@ -87,10 +107,9 @@ fun TalkHistory(talks: List<Tts>, viewModel: TalkViewModel) {
 
 @Composable
 private fun TalkCard(talkData: Tts, viewModel: TalkViewModel) {
-    val voiceState = when (
-        viewModel.getTtsState(talkData.id).collectAsState(initial = VoiceState.VOICE_LOADING).value) {
+    val voiceState = when (talkData.state) {
         true -> VoiceState.VOICE_READY
-        else -> VoiceState.VOICE_LOADING
+        false -> VoiceState.VOICE_LOADING
     }
 
     ElevatedCard(

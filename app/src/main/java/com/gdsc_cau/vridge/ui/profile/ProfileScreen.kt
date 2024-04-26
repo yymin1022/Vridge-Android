@@ -9,10 +9,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -24,20 +27,47 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gdsc_cau.vridge.R
 import com.gdsc_cau.vridge.data.models.User
 import com.gdsc_cau.vridge.ui.login.LoginActivity
-import com.gdsc_cau.vridge.ui.main.MainActivity
 import com.gdsc_cau.vridge.ui.theme.Grey3
 import com.gdsc_cau.vridge.ui.util.TopBarType
 import com.gdsc_cau.vridge.ui.util.VridgeTopBar
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
-    val user = viewModel.user.collectAsStateWithLifecycle().value
-    val isLoggedOut = viewModel.isLoggedOut.collectAsStateWithLifecycle().value
+fun ProfileScreen(
+    onShowErrorSnackBar: (Throwable?) -> Unit,
+    viewModel: ProfileViewModel = hiltViewModel()
+) {
+    val profileUiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    when (profileUiState) {
+        is ProfileUiState.Loading -> ProfileLoading()
+        is ProfileUiState.Success -> ProfileContent(
+            (profileUiState as ProfileUiState.Success).user,
+            (profileUiState as ProfileUiState.Success).isLoggedOut,
+            { viewModel.signOut() },
+            { viewModel.unregister() }
+        )
+    }
+
+    LaunchedEffect(true) {
+        viewModel.errorFlow.collectLatest { throwable -> onShowErrorSnackBar(throwable) }
+    }
+}
+
+@Composable
+fun ProfileLoading() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+fun ProfileContent(user: User, isLoggedOut: Boolean, onClickLogout: () -> Unit, onClickUnregister: () -> Unit) {
     val context = LocalContext.current
+
     Box(modifier = Modifier.fillMaxSize()) {
         VridgeTopBar(title = "Profile", type = TopBarType.NONE)
-        ProfileList(profileData = user, viewModel = viewModel)
+        ProfileList(profileData = user, onClickLogout, onClickUnregister)
     }
 
     LaunchedEffect(key1 = isLoggedOut) {
@@ -49,7 +79,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
 }
 
 @Composable
-fun ProfileList(profileData: User, viewModel: ProfileViewModel) {
+fun ProfileList(profileData: User, onClickLogout: () -> Unit, onClickUnregister: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center
@@ -73,17 +103,13 @@ fun ProfileList(profileData: User, viewModel: ProfileViewModel) {
             title = stringResource(id = R.string.profile_list_item_signout_title),
             content = stringResource(id = R.string.profile_list_item_signout_description),
             clickable = true,
-            onClick = {
-                viewModel.signOut()
-            }
+            onClick = onClickLogout
         )
         ProfileListDivider()
         ProfileListItem(
             title = stringResource(id = R.string.profile_list_item_delete_title),
             content = stringResource(id = R.string.profile_list_item_delete_description),
-            onClick = {
-                viewModel.unregister()
-            }
+            onClick = onClickUnregister
         )
     }
 }
