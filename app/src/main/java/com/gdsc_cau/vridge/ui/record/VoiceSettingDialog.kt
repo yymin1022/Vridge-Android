@@ -41,8 +41,10 @@ import com.gdsc_cau.vridge.ui.theme.PrimaryLight
 fun VoiceSettingDialog(
     isShowingDialog: Boolean,
     onConfirmRequest: () -> Unit,
-    text: MutableState<String>,
-    sliderPosition: MutableState<Float>,
+    text: String,
+    onTextChanged: (String) -> Unit,
+    sliderPosition: Float,
+    onSliderChanged: (Float) -> Unit,
     dismissOnBackPress: Boolean = true,
     dismissOnClickOutside: Boolean = false
 ) {
@@ -56,7 +58,9 @@ fun VoiceSettingDialog(
         ) {
             DialogContent(
                 text = text,
+                onTextChanged = onTextChanged,
                 sliderPosition = sliderPosition,
+                onSliderChanged = onSliderChanged,
                 onConfirmRequest = onConfirmRequest,
                 onDismissRequest = { return@DialogContent }
             )
@@ -66,8 +70,10 @@ fun VoiceSettingDialog(
 
 @Composable
 fun DialogContent(
-    text: MutableState<String>,
-    sliderPosition: MutableState<Float>,
+    text: String,
+    onTextChanged: (String) -> Unit,
+    sliderPosition: Float,
+    onSliderChanged: (Float) -> Unit,
     onConfirmRequest: () -> Unit,
     onDismissRequest: () -> Unit
 ) {
@@ -78,22 +84,24 @@ fun DialogContent(
             .background(
                 color = Color.White,
                 shape = RoundedCornerShape(8.dp)
-            ).padding(16.dp),
+            )
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceEvenly
     ) {
         OutlinedTextField(
-            label = {
-                Text("Voice Name")
-            }, value = text.value, onValueChange = { text.value = it })
+            label = { Text("Voice Name") },
+            value = text,
+            onValueChange = onTextChanged
+        )
         Row(horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Man")
             Text("Woman")
         }
         Slider(
             modifier = Modifier.padding(horizontal = 16.dp),
-            value = sliderPosition.value,
-            onValueChange = { sliderPosition.value = it },
+            value = sliderPosition,
+            onValueChange = onSliderChanged,
             colors = SliderDefaults.colors(
                 thumbColor = PrimaryDark,
                 activeTrackColor = PrimaryDark,
@@ -109,10 +117,12 @@ fun DialogContent(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Button(onClick = onDismissRequest, enabled = text.value != "") {
+            Button(onClick = onDismissRequest) {
                 Text("Cancel", color = OnPrimary)
             }
-            Button(onClick = onConfirmRequest, modifier = Modifier.padding(start = 16.dp)) {
+            Button(onClick = {
+                onConfirmRequest()
+            }, enabled = text != "", modifier = Modifier.padding(start = 16.dp)) {
                 Text("Confirm", color = OnPrimary)
             }
         }
