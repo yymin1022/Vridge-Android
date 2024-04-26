@@ -12,8 +12,7 @@ sealed interface RecordUiState {
     data class Success(
         val index: Int,
         val text: String,
-        val isRecording: Boolean,
-        val isFinished: Boolean,
-        val isLoading: Boolean
+        val size: Int,
+        val state: RecordState
     ) : RecordUiState
 }
