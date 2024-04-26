@@ -2,6 +2,7 @@ package com.gdsc_cau.vridge.ui.record
 
 import android.media.MediaRecorder
 import android.os.Build
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,10 +32,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -65,6 +68,12 @@ fun RecordRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     viewModel.setFileName(LocalContext.current.externalCacheDir?.absolutePath ?: "")
 
+    val recorder = if (Build.VERSION_CODES.S <= Build.VERSION.SDK_INT) {
+        MediaRecorder(LocalContext.current)
+    } else {
+        MediaRecorder()
+    }
+
     when (uiState) {
         is RecordUiState.Loading -> {
             CircularProgressIndicator()
@@ -73,6 +82,7 @@ fun RecordRoute(
         is RecordUiState.Success -> {
             RecordScreen(
                 uiState as RecordUiState.Success,
+                recorder,
                 onBackClick,
                 viewModel::getNext,
                 viewModel::startRecord,
@@ -94,6 +104,7 @@ fun RecordRoute(
 @Composable
 fun RecordScreen(
     uiState: RecordUiState.Success,
+    recorder: MediaRecorder?,
     onBackClick: () -> Unit,
     onClickNext: () -> Unit,
     onStartRecord: (MediaRecorder) -> Unit,
@@ -113,16 +124,11 @@ fun RecordScreen(
     val voiceName = remember { mutableStateOf("") }
     val sliderPosition = remember { mutableFloatStateOf(-6f) }
 
-    val recorder = if (Build.VERSION_CODES.S <= Build.VERSION.SDK_INT) {
-        MediaRecorder(LocalContext.current)
-    } else {
-        MediaRecorder()
-    }
-
     Column(
         modifier =
         Modifier
-            .fillMaxSize()
+            .fillMaxSize().background(White),
+
     ) {
         VridgeTopBar(
             title = "Voice Recording",
@@ -140,7 +146,7 @@ fun RecordScreen(
                 .weight(1f)
         ) {
             RecordButton(recordingStatus) {
-                if (it) onStartRecord(recorder) else onStopRecord()
+                if (it && recorder != null) onStartRecord(recorder) else onStopRecord()
             }
         }
         RecordNavigator(
@@ -152,14 +158,15 @@ fun RecordScreen(
         )
         LoadingDialog(isShowingDialog = uiState.state == RecordState.LOADING)
         VoiceSettingDialog(
-            isShowingDialog = (uiState.state == RecordState.RECORDED && uiState.index == uiState.size),
+            isShowingDialog = uiState.state == RecordState.FINISHING,
             text = voiceName.value,
             onTextChanged = { voiceName.value = it },
             sliderPosition = sliderPosition.floatValue,
             onSliderChanged = { sliderPosition.floatValue = it },
             onConfirmRequest = {
                 onFinishRecord(voiceName.value, sliderPosition.floatValue)
-            }
+            },
+            onDismissRequest = onStopPlay
         )
     }
 
@@ -342,6 +349,132 @@ fun RecordNavigateButton(text: String, clickable: Boolean, onBtnClicked: () -> U
             text = text
         )
     }
+}
+
+@Preview
+@Composable
+fun RecordScreenIdlePreview() {
+    RecordScreen(
+        uiState = RecordUiState.Success(
+            text = "Hello, World!",
+            index = 1,
+            size = 3,
+            state = RecordState.IDLE
+        ),
+        recorder = null,
+        onBackClick = {},
+        onClickNext = {},
+        onStartRecord = {},
+        onStopRecord = {},
+        onStartPlay = {},
+        onStopPlay = {},
+        onFinishRecord = { _, _ -> }
+    )
+}
+
+@Preview
+@Composable
+fun RecordScreenRecordedDonePreview() {
+    RecordScreen(
+        uiState = RecordUiState.Success(
+            text = "Hello, World!",
+            index = 3,
+            size = 3,
+            state = RecordState.RECORDED
+        ),
+        recorder = null,
+        onBackClick = {},
+        onClickNext = {},
+        onStartRecord = {},
+        onStopRecord = {},
+        onStartPlay = {},
+        onStopPlay = {},
+        onFinishRecord = { _, _ -> }
+    )
+}
+
+@Preview
+@Composable
+fun RecordScreenRecordedPreview() {
+    RecordScreen(
+        uiState = RecordUiState.Success(
+            text = "Hello, World!",
+            index = 1,
+            size = 3,
+            state = RecordState.RECORDED
+        ),
+        recorder = null,
+        onBackClick = {},
+        onClickNext = {},
+        onStartRecord = {},
+        onStopRecord = {},
+        onStartPlay = {},
+        onStopPlay = {},
+        onFinishRecord = { _, _ -> }
+    )
+}
+
+@Preview
+@Composable
+fun RecordScreenPlayingPreview() {
+    RecordScreen(
+        uiState = RecordUiState.Success(
+            text = "Hello, World!",
+            index = 1,
+            size = 3,
+            state = RecordState.PLAYING
+        ),
+        recorder = null,
+        onBackClick = {},
+        onClickNext = {},
+        onStartRecord = {},
+        onStopRecord = {},
+        onStartPlay = {},
+        onStopPlay = {},
+        onFinishRecord = { _, _ -> }
+    )
+}
+
+@Preview
+@Composable
+fun RecordScreenLoadingPreview() {
+    RecordScreen(
+        uiState = RecordUiState.Success(
+            text = "Hello, World!",
+            index = 1,
+            size = 3,
+            state = RecordState.LOADING
+        ),
+        recorder = null,
+        onBackClick = {},
+        onClickNext = {},
+        onStartRecord = {},
+        onStopRecord = {},
+        onStartPlay = {},
+        onStopPlay = {},
+        onFinishRecord = { _, _ -> }
+    )
+}
+
+@Preview
+@Composable
+fun RecordScreenFinishPreview() {
+    RecordScreen(
+        uiState = RecordUiState.Success(
+            text = "Hello, World!",
+            index = 3,
+            size = 3,
+            state = RecordState.FINISHING
+        ),
+        recorder = null,
+        onBackClick = {},
+        onClickNext = {},
+        onStartRecord = {},
+        onStopRecord = {},
+        onStartPlay = {},
+        onStopPlay = {},
+        onFinishRecord = { _, _ -> }
+    )
 }
 
 enum class RecordState {
