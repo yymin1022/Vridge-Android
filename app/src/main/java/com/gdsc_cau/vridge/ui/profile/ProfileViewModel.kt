@@ -1,5 +1,6 @@
 package com.gdsc_cau.vridge.ui.profile
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gdsc_cau.vridge.data.repository.UserRepository
@@ -35,6 +36,7 @@ class ProfileViewModel @Inject constructor(
                     isLoggedOut = false
                 )
             }.catch { throwable ->
+                Log.e("VRIDGE-ProfileVM", throwable.message.toString())
                 _errorFlow.emit(throwable)
             }.collect { _uiState.value = it }
         }
