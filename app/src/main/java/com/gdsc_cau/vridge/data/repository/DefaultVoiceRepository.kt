@@ -9,9 +9,6 @@ import com.gdsc_cau.vridge.data.dto.VoiceDTO
 import com.gdsc_cau.vridge.data.models.Voice
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import java.io.FileInputStream
 import java.util.UUID
 import javax.inject.Inject
@@ -38,7 +35,7 @@ constructor(
     private var vid: String? = null
     private var path: String? = null
 
-    override fun getTrainingText(index: Int): String {
+    override fun getScript(index: Int): String {
         if (index < 1 || index > scripts.size)
             return ""
         return scripts[index - 1]
@@ -48,13 +45,13 @@ constructor(
         return scripts.size
     }
 
-    override suspend fun beforeRecord(path: String): Boolean {
+    override suspend fun setFileName(path: String): Boolean {
         vid = UUID.randomUUID().toString().replace("-", "")
         this.path = path
         return true
     }
 
-    override suspend fun saveVoice(index: Int): Boolean {
+    override suspend fun setFile(index: Int): Boolean {
         val uid = getUid() ?: return false
         val vid = this.vid ?: return false
         val fileName = "$path/$index.m4a"
@@ -64,7 +61,7 @@ constructor(
         return storage.uploadFile(uid, vid, "$index.m4a", data)
     }
 
-    override suspend fun afterRecord(name: String, pitch: Float): Boolean {
+    override suspend fun finishRecord(name: String, pitch: Float): Boolean {
         val uid = getUid() ?: return false
         val vid = this.vid ?: return false
         val data = VoiceDTO(uid, vid)
