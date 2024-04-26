@@ -57,7 +57,6 @@ fun MainScreen(
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
                     .padding(padding)
-                    .padding(vertical = 8.dp)
             ) {
                 NavHost(
                     navController = navigator.navController,
