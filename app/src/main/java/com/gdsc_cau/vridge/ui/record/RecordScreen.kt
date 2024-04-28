@@ -127,7 +127,7 @@ fun RecordScreen(
     Column(
         modifier =
         Modifier
-            .fillMaxSize().background(White),
+            .fillMaxSize(),
 
     ) {
         VridgeTopBar(
