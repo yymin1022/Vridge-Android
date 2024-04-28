@@ -1,8 +1,8 @@
 package com.gdsc_cau.vridge.data.database
 
-import com.gdsc_cau.vridge.ui.util.InvalidUidException
 import com.gdsc_cau.vridge.data.models.Tts
 import com.gdsc_cau.vridge.data.models.User
+import com.gdsc_cau.vridge.ui.util.InvalidUidException
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.channels.awaitClose
@@ -43,19 +43,12 @@ constructor(
         return talks
     }
 
-    fun getVoiceList(uid: String): Map<String, String> {
-        var voiceList: Map<String, String> = mapOf()
-
-        database.collection("user").document(uid)
-            .get().addOnSuccessListener { document ->
-                if (document != null) {
-                    val data = document.data
-                    if (data != null) {
-                        voiceList = data.get("voice") as? Map<String, String> ?: mapOf()
-                    }
-                }
-            }
-        return voiceList
+    suspend fun getVoiceList(uid: String) :Map<String, String> {
+        database.collection("user").document(uid).get().await()?.let { document ->
+            document.data?.let { data ->
+                return data["voice"] as? Map<String, String> ?: mapOf()
+            } ?: return mapOf()
+        } ?: return mapOf()
     }
 
     fun saveTts(uid: String, vid: String, tts: Tts) {
