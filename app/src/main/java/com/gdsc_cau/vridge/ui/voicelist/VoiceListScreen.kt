@@ -28,7 +28,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +45,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gdsc_cau.vridge.R
 import com.gdsc_cau.vridge.data.models.Voice
+import com.gdsc_cau.vridge.ui.record.RecordState
+import com.gdsc_cau.vridge.ui.record.VoiceSettingDialog
 import com.gdsc_cau.vridge.ui.theme.OnPrimaryLight
 import com.gdsc_cau.vridge.ui.theme.Primary
 import com.gdsc_cau.vridge.ui.theme.White
@@ -76,7 +80,7 @@ fun VoiceListRoute(
                 GridVoiceList(
                     (uiState as VoiceListUiState.Success).voiceList,
                     onRecordClick,
-                    { list, name -> viewModel.synthesize(list, name) },
+                    { list, name, pitch -> viewModel.synthesize(list, name, pitch) },
                     onVoiceClick,
                     onHideBottomBar
                 )
@@ -118,12 +122,16 @@ fun EmptyVoiceList(onRecordClick: () -> Unit) {
 fun GridVoiceList(
     voices: List<Voice>,
     onRecordClick: () -> Unit,
-    onSynthClick: (List<String>, String) -> Unit,
+    onSynthClick: (List<String>, String, Float) -> Unit,
     onVoiceClick: (Voice) -> Unit,
     onHideBottomBar: (Boolean) -> Unit
 ) {
     val selectedIds = rememberSaveable { mutableStateOf(emptySet<String>()) }
     val inSelectionMode = rememberSaveable { mutableStateOf(false) }
+
+    val voiceName = remember { mutableStateOf("") }
+    val sliderPosition = remember { mutableFloatStateOf(-6f) }
+    val showDialog = remember { mutableStateOf(false) }
 
     BackHandler {
         if (inSelectionMode.value) {
@@ -178,7 +186,7 @@ fun GridVoiceList(
         ) {
             if (inSelectionMode.value) {
                 Button(
-                    onClick = { onSynthClick(selectedIds.value.toList(), "") },
+                    onClick = { showDialog.value = true },
                     elevation = ButtonDefaults.buttonElevation(4.dp),
                     modifier = Modifier.padding(horizontal = 8.dp),
                     enabled = selectedIds.value.size == 2
@@ -219,6 +227,18 @@ fun GridVoiceList(
                 }
             }
         }
+
+        VoiceSettingDialog(
+            isShowingDialog = showDialog.value,
+            text = voiceName.value,
+            onTextChanged = { voiceName.value = it },
+            sliderPosition = sliderPosition.floatValue,
+            onSliderChanged = { sliderPosition.floatValue = it },
+            onConfirmRequest = {
+                onSynthClick(selectedIds.value.toList(), voiceName.value, sliderPosition.value)
+            },
+            onDismissRequest = { showDialog.value = false }
+        )
     }
 }
 
@@ -290,7 +310,7 @@ fun GridVoiceListPreview() {
             Voice("20", "Voice 20"),
         ),
         onRecordClick = {},
-        onSynthClick = { _, _ -> },
+        onSynthClick = { _, _, _ -> },
         onVoiceClick = {},
         onHideBottomBar = {}
     )
