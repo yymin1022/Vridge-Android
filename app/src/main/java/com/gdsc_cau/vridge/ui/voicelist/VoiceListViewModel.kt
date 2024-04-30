@@ -43,19 +43,22 @@ class VoiceListViewModel @Inject constructor(
         }
     }
 
-    fun synthesize(voiceList: List<String>, name: String) {
+    fun synthesize(voiceList: List<String>, name: String, pitch: Float) {
         viewModelScope.launch {
-            val state = _uiState.value
-            val synthVoiceId = repository.synthesize(voiceList)
+            try {
+                val state = _uiState.value
+                val synthVoiceId = repository.synthesize(voiceList)
 
-            if (state !is VoiceListUiState.Success) return@launch
-
-            _uiState.value = VoiceListUiState.Success(
-                voiceList = state.voiceList + Voice(
-                    id = synthVoiceId,
-                    name = name
+                if (state !is VoiceListUiState.Success) return@launch
+                _uiState.value = VoiceListUiState.Success(
+                    voiceList = state.voiceList + Voice(
+                        id = synthVoiceId,
+                        name = name
+                    )
                 )
-            )
+            } catch (e: Exception) {
+                _errorFlow.emit(e)
+            }
         }
     }
 }

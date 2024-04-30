@@ -2,8 +2,10 @@ package com.gdsc_cau.vridge.ui.main
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -40,25 +42,36 @@ fun MainBottomBar(
                 animationSpec =
                     keyframes {
                         this.durationMillis = 0
-                    }
-            ),
-        exit =
-            fadeOut(
-                animationSpec =
-                    keyframes {
-                        this.durationMillis = 0
-                    }
-            )
+                }
+            ) +
+            expandVertically (
+            animationSpec =
+                keyframes {
+                    this.durationMillis = 0
+                },
+    ),
+    exit =
+        fadeOut(
+            animationSpec =
+            keyframes {
+                this.durationMillis = 0
+            }
+        ) + shrinkVertically(
+            animationSpec =
+            keyframes {
+                this.durationMillis = 0
+            }
+        )
     ) {
         Row(
             modifier =
-                Modifier
-                    .navigationBarsPadding()
-                    .fillMaxWidth()
-                    .height(64.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.surface
-                    ),
+            Modifier
+                .navigationBarsPadding()
+                .fillMaxWidth()
+                .height(64.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.surface
+                ),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             tabs.forEach {
@@ -80,16 +93,16 @@ private fun RowScope.MainBottomBarItem(
 ) {
     Column(
         modifier =
-            Modifier
-                .weight(1f)
-                .fillMaxHeight()
-                .selectable(
-                    selected = selected,
-                    indication = null,
-                    onClick = onTabSelected,
-                    role = null,
-                    interactionSource = remember { MutableInteractionSource() }
-                ),
+        Modifier
+            .weight(1f)
+            .fillMaxHeight()
+            .selectable(
+                selected = selected,
+                indication = null,
+                onClick = onTabSelected,
+                role = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -97,11 +110,11 @@ private fun RowScope.MainBottomBarItem(
             painter = painterResource(id = tab.iconResId),
             contentDescription = tab.contentDescription,
             tint =
-                if (selected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onBackground
-                },
+            if (selected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onBackground
+            },
             modifier = Modifier.size(34.dp)
         )
         Text(text = tab.name, style = MaterialTheme.typography.labelSmall)

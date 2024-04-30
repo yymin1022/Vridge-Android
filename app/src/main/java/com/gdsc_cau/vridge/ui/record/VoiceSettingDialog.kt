@@ -104,12 +104,11 @@ fun DialogContent(
             value = text,
             onValueChange = onTextChanged
         )
-        Row(horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Man")
             Text("Woman")
         }
         Slider(
-            modifier = Modifier.padding(horizontal = 16.dp),
             value = sliderPosition,
             onValueChange = onSliderChanged,
             colors = SliderDefaults.colors(
@@ -123,20 +122,23 @@ fun DialogContent(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(16.dp),
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Button(
                 onClick = onDismissRequest,
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryLight)) {
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryLight)
+            ) {
                 Text("Cancel", color = OnPrimaryLight)
             }
-            Button(onClick = {
-                onConfirmRequest()
-            }, enabled = text != "",
+            Button(
+                onClick = {
+                    onConfirmRequest()
+                }, enabled = text != "",
                 modifier = Modifier.padding(start = 16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Primary)) {
+                colors = ButtonDefaults.buttonColors(containerColor = Primary)
+            ) {
                 Text("Confirm", color = OnPrimary)
             }
         }

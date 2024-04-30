@@ -9,6 +9,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -22,12 +23,9 @@ import com.gdsc_cau.vridge.R
 import com.gdsc_cau.vridge.ui.profile.ProfileRoute
 import com.gdsc_cau.vridge.ui.profile.ProfileScreen
 import com.gdsc_cau.vridge.ui.record.RecordRoute
-import com.gdsc_cau.vridge.ui.record.RecordScreen
 import com.gdsc_cau.vridge.ui.talk.TalkRoute
 import com.gdsc_cau.vridge.ui.talk.TalkScreen
-import com.gdsc_cau.vridge.ui.util.VridgeTopBar
 import com.gdsc_cau.vridge.ui.voicelist.VoiceListRoute
-import com.gdsc_cau.vridge.ui.voicelist.VoiceListScreen
 import kotlinx.coroutines.launch
 import java.net.UnknownHostException
 
@@ -36,6 +34,7 @@ fun MainScreen(
     navigator: MainNavigator = rememberMainNavigator()
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
+    val bottomBarState = remember { mutableStateOf(true) }
 
     val coroutineScope = rememberCoroutineScope()
     val localContextResource = LocalContext.current.resources
@@ -53,23 +52,24 @@ fun MainScreen(
     }
 
     Scaffold(
-        content = { padding ->
+        content = { it ->
             Box(
                 modifier =
                 Modifier
+                    .padding(it)
+                    .padding(bottom = if (navigator.shouldShowBottomBar()) 8.dp else 0.dp)
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
-                    .padding(padding)
             ) {
                 NavHost(
                     navController = navigator.navController,
                     startDestination = navigator.startDestination
                 ) {
                     composable(VoiceListRoute.route) {
-                        VoiceListScreen(
-                            padding = padding,
+                        VoiceListRoute(
                             onRecordClick = { navigator.navigateRecord() },
                             onVoiceClick = { navigator.navigateTalk(it.id) },
+                            onHideBottomBar = { bottomBarState.value = it },
                             onShowErrorSnackBar = onShowErrorSnackBar
                         )
                     }
@@ -82,11 +82,11 @@ fun MainScreen(
                     composable(
                         route = TalkRoute.detailRoute("{id}"),
                         arguments =
-                            listOf(
-                                navArgument("id") {
-                                    type = NavType.StringType
-                                }
-                            )
+                        listOf(
+                            navArgument("id") {
+                                type = NavType.StringType
+                            }
+                        )
                     ) {
                         val voiceId = it.arguments?.getString("id") ?: ""
                         TalkScreen(
@@ -105,7 +105,7 @@ fun MainScreen(
         },
         bottomBar = {
             MainBottomBar(
-                visible = navigator.shouldShowBottomBar(),
+                visible = navigator.shouldShowBottomBar() && bottomBarState.value,
                 tabs = MainTab.entries,
                 currentTab = navigator.currentTab,
                 onTabSelected = { navigator.navigate(it) }

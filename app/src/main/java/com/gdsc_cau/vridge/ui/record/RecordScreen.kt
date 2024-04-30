@@ -2,7 +2,6 @@ package com.gdsc_cau.vridge.ui.record
 
 import android.media.MediaRecorder
 import android.os.Build
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,16 +22,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -113,21 +108,13 @@ fun RecordScreen(
     onStopPlay: () -> Unit,
     onFinishRecord: (String, Float) -> Unit
 ) {
-    val recordingStatus = rememberSaveable {
-        mutableStateOf(false)
-    }
-
-    val playingStatus = rememberSaveable {
-        mutableStateOf(false)
-    }
-
     val voiceName = remember { mutableStateOf("") }
     val sliderPosition = remember { mutableFloatStateOf(-6f) }
 
     Column(
         modifier =
         Modifier
-            .fillMaxSize().background(White),
+            .fillMaxSize(),
 
     ) {
         VridgeTopBar(
@@ -145,12 +132,12 @@ fun RecordScreen(
                 .fillMaxWidth()
                 .weight(1f)
         ) {
-            RecordButton(recordingStatus) {
+            RecordButton(uiState.state == RecordState.RECORDING) {
                 if (it && recorder != null) onStartRecord(recorder) else onStopRecord()
             }
         }
         RecordNavigator(
-            playingStatus,
+            uiState.state == RecordState.PLAYING,
             uiState.state == RecordState.RECORDED,
             uiState.state == RecordState.RECORDED && uiState.index == uiState.size,
             { if (it) onStartPlay() else onStopPlay() },
@@ -242,13 +229,13 @@ fun RecordDataCard(data: String) {
 }
 
 @Composable
-fun RecordButton(recordingStatus: MutableState<Boolean>, onClickRecord: (Boolean) -> Unit) {
+fun RecordButton(isRecording: Boolean, onClickRecord: (Boolean) -> Unit) {
     val lottieAnimatable = rememberLottieAnimatable()
     val lottieComposition by rememberLottieComposition(
         LottieCompositionSpec.RawRes(R.raw.anim_lottie_loading)
     )
 
-    LaunchedEffect(recordingStatus) {
+    LaunchedEffect(isRecording) {
         lottieAnimatable.animate(
             composition = lottieComposition,
             clipSpec = LottieClipSpec.Frame(0, 1200),
@@ -275,11 +262,10 @@ fun RecordButton(recordingStatus: MutableState<Boolean>, onClickRecord: (Boolean
                 .width(130.dp),
             shape = CircleShape,
             onClick = {
-                recordingStatus.value = !recordingStatus.value
-                onClickRecord(recordingStatus.value)
+                onClickRecord(isRecording.not())
             }
         ) {
-            if (recordingStatus.value) {
+            if (isRecording) {
                 LottieAnimation(
                     composition = lottieComposition,
                     contentScale = ContentScale.FillHeight,
@@ -300,7 +286,7 @@ fun RecordButton(recordingStatus: MutableState<Boolean>, onClickRecord: (Boolean
 
 @Composable
 fun RecordNavigator(
-    playingStatus: MutableState<Boolean>,
+    isPlaying: Boolean,
     clickable: Boolean,
     isFinish: Boolean,
     onClickPlay: (Boolean) -> Unit,
@@ -313,11 +299,10 @@ fun RecordNavigator(
             .fillMaxWidth()
     ) {
         RecordNavigateButton(
-            text = if (!playingStatus.value) stringResource(id = R.string.record_btn_play) else stringResource(id = R.string.record_btn_stop),
+            text = if (isPlaying.not()) stringResource(id = R.string.record_btn_play) else stringResource(id = R.string.record_btn_stop),
             clickable
         ) {
-            playingStatus.value = !playingStatus.value
-            onClickPlay(playingStatus.value)
+            onClickPlay(isPlaying.not())
         }
         RecordNavigateButton(
             text = if (isFinish) stringResource(id = R.string.record_btn_finish) else stringResource(id = R.string.record_btn_next),

@@ -28,7 +28,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,13 +38,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gdsc_cau.vridge.R
-import com.gdsc_cau.vridge.data.models.Gender
 import com.gdsc_cau.vridge.data.models.Voice
+import com.gdsc_cau.vridge.ui.record.RecordState
+import com.gdsc_cau.vridge.ui.record.VoiceSettingDialog
 import com.gdsc_cau.vridge.ui.theme.OnPrimaryLight
 import com.gdsc_cau.vridge.ui.theme.Primary
 import com.gdsc_cau.vridge.ui.theme.White
@@ -51,10 +55,10 @@ import com.gdsc_cau.vridge.ui.util.VridgeTopBar
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-fun VoiceListScreen(
-    padding: PaddingValues,
+fun VoiceListRoute(
     onVoiceClick: (Voice) -> Unit,
     onRecordClick: () -> Unit,
+    onHideBottomBar: (Boolean) -> Unit,
     onShowErrorSnackBar: (Throwable?) -> Unit,
     viewModel: VoiceListViewModel = hiltViewModel()
 ) {
@@ -69,17 +73,16 @@ fun VoiceListScreen(
             }
 
             is VoiceListUiState.Empty -> {
-                VridgeTopBar(title = "Make your voice", type = TopBarType.NONE)
                 EmptyVoiceList(onRecordClick)
             }
 
             is VoiceListUiState.Success -> {
-                VridgeTopBar(title = "Choose your voice", type = TopBarType.NONE)
                 GridVoiceList(
                     (uiState as VoiceListUiState.Success).voiceList,
                     onRecordClick,
-                    { list, name -> viewModel.synthesize(list, name) },
-                    onVoiceClick
+                    { list, name, pitch -> viewModel.synthesize(list, name, pitch) },
+                    onVoiceClick,
+                    onHideBottomBar
                 )
             }
         }
@@ -92,6 +95,7 @@ fun VoiceListScreen(
 
 @Composable
 fun EmptyVoiceList(onRecordClick: () -> Unit) {
+    VridgeTopBar(title = "Make your voice", type = TopBarType.NONE)
     Column(
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -118,11 +122,16 @@ fun EmptyVoiceList(onRecordClick: () -> Unit) {
 fun GridVoiceList(
     voices: List<Voice>,
     onRecordClick: () -> Unit,
-    onSynthClick: (List<String>, String) -> Unit,
-    onVoiceClick: (Voice) -> Unit
+    onSynthClick: (List<String>, String, Float) -> Unit,
+    onVoiceClick: (Voice) -> Unit,
+    onHideBottomBar: (Boolean) -> Unit
 ) {
     val selectedIds = rememberSaveable { mutableStateOf(emptySet<String>()) }
     val inSelectionMode = rememberSaveable { mutableStateOf(false) }
+
+    val voiceName = remember { mutableStateOf("") }
+    val sliderPosition = remember { mutableFloatStateOf(-6f) }
+    val showDialog = remember { mutableStateOf(false) }
 
     BackHandler {
         if (inSelectionMode.value) {
@@ -131,11 +140,16 @@ fun GridVoiceList(
         }
     }
 
+    LaunchedEffect(inSelectionMode.value) {
+        onHideBottomBar(inSelectionMode.value.not())
+    }
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        VridgeTopBar(title = "Choose your voice", type = TopBarType.NONE)
         LazyVerticalGrid(
             modifier =
             Modifier
@@ -172,9 +186,10 @@ fun GridVoiceList(
         ) {
             if (inSelectionMode.value) {
                 Button(
-                    onClick = { onSynthClick(selectedIds.value.toList(), "") },
+                    onClick = { showDialog.value = true },
                     elevation = ButtonDefaults.buttonElevation(4.dp),
-                    modifier = Modifier.padding(horizontal = 8.dp)
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    enabled = selectedIds.value.size == 2
                 ) {
                     Text(
                         "Synth ( ${selectedIds.value.size} / 2 )",
@@ -212,6 +227,18 @@ fun GridVoiceList(
                 }
             }
         }
+
+        VoiceSettingDialog(
+            isShowingDialog = showDialog.value,
+            text = voiceName.value,
+            onTextChanged = { voiceName.value = it },
+            sliderPosition = sliderPosition.floatValue,
+            onSliderChanged = { sliderPosition.floatValue = it },
+            onConfirmRequest = {
+                onSynthClick(selectedIds.value.toList(), voiceName.value, sliderPosition.value)
+            },
+            onDismissRequest = { showDialog.value = false }
+        )
     }
 }
 
@@ -248,4 +275,43 @@ fun VoiceListItem(
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun EmptyVoiceListPreview() {
+    EmptyVoiceList {}
+}
+
+@Preview
+@Composable
+fun GridVoiceListPreview() {
+    GridVoiceList(
+        voices = listOf(
+            Voice("1", "Voice 1"),
+            Voice("2", "Voice 2"),
+            Voice("3", "Voice 3"),
+            Voice("4", "Voice 4"),
+            Voice("5", "Voice 5"),
+            Voice("6", "Voice 6"),
+            Voice("7", "Voice 7"),
+            Voice("8", "Voice 8"),
+            Voice("9", "Voice 9"),
+            Voice("10", "Voice 10"),
+            Voice("11", "Voice 11"),
+            Voice("12", "Voice 12"),
+            Voice("13", "Voice 13"),
+            Voice("14", "Voice 14"),
+            Voice("15", "Voice 15"),
+            Voice("16", "Voice 16"),
+            Voice("17", "Voice 17"),
+            Voice("18", "Voice 18"),
+            Voice("19", "Voice 19"),
+            Voice("20", "Voice 20"),
+        ),
+        onRecordClick = {},
+        onSynthClick = { _, _, _ -> },
+        onVoiceClick = {},
+        onHideBottomBar = {}
+    )
 }
