@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UidDTO(
-    @SerialName("uid") val uid: String,
+    val uid: String,
 )
