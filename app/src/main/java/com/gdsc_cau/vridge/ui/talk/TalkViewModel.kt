@@ -5,6 +5,7 @@ import android.media.MediaPlayer
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gdsc_cau.vridge.data.models.Tts
 import com.gdsc_cau.vridge.data.repository.TalkRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -85,7 +86,15 @@ class TalkViewModel @AssistedInject constructor(
 
     fun createTts(text: String) {
         viewModelScope.launch {
-            repository.createTts(text, vid)
+            val state = _uiState.value
+            if (state !is TalkUiState.Success) return@launch
+
+            val list = state.talks.toMutableList()
+            val tempList = list + Tts("", text, System.currentTimeMillis(), false)
+            _uiState.value = state.copy(tempList)
+
+            val newList = list + repository.createTts(text, vid)
+            _uiState.value = state.copy(newList)
         }
     }
 }

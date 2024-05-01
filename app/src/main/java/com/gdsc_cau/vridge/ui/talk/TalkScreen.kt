@@ -26,7 +26,6 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -107,7 +106,7 @@ fun TalkHistory(talks: List<Tts>, viewModel: TalkViewModel) {
 
 @Composable
 private fun TalkCard(talkData: Tts, viewModel: TalkViewModel) {
-    val voiceState = when (talkData.state) {
+    val voiceState = when (talkData.status) {
         true -> VoiceState.VOICE_READY
         false -> VoiceState.VOICE_LOADING
     }

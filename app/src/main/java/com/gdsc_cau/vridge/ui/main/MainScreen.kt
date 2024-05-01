@@ -68,7 +68,7 @@ fun MainScreen(
                     composable(VoiceListRoute.route) {
                         VoiceListRoute(
                             onRecordClick = { navigator.navigateRecord() },
-                            onVoiceClick = { navigator.navigateTalk(it.id) },
+                            onVoiceClick = { navigator.navigateTalk(it.vid) },
                             onHideBottomBar = { bottomBarState.value = it },
                             onShowErrorSnackBar = onShowErrorSnackBar
                         )

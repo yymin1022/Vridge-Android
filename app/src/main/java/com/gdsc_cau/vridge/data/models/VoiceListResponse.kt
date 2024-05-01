@@ -1,6 +1,8 @@
 package com.gdsc_cau.vridge.data.models
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class VoiceListResponse(
-    var uid: String,
-    var voiceList: List<String>
+    val voiceList: List<Voice>
 )

@@ -2,10 +2,8 @@ package com.gdsc_cau.vridge.ui.record
 
 import android.media.MediaPlayer
 import android.media.MediaRecorder
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gdsc_cau.vridge.data.repository.VoiceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -17,6 +15,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.io.IOException
 import javax.inject.Inject
+import kotlin.math.roundToInt
 
 @HiltViewModel
 class RecordViewModel @Inject constructor(
@@ -66,14 +65,14 @@ class RecordViewModel @Inject constructor(
 
     fun startRecord(recorder: MediaRecorder) {
         viewModelScope.launch {
-            _recordState.emit(RecordState.RECORDING)
-            this@RecordViewModel.recorder = recorder.apply {
-                setAudioSource(MediaRecorder.AudioSource.MIC)
-                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                setOutputFile(fileName)
-                setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-            }
             try {
+                _recordState.emit(RecordState.RECORDING)
+                this@RecordViewModel.recorder = recorder.apply {
+                    setAudioSource(MediaRecorder.AudioSource.MIC)
+                    setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                    setOutputFile(fileName)
+                    setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+                }
                 recorder.prepare()
                 recorder.start()
             } catch (e: Exception) {
@@ -108,7 +107,7 @@ class RecordViewModel @Inject constructor(
                     this.prepare()
                     this.start()
                 }
-            } catch (e: IOException) {
+            } catch (e: Exception) {
                 _recordState.emit(RecordState.RECORDED)
                 _errorFlow.emit(e)
             }
@@ -117,39 +116,54 @@ class RecordViewModel @Inject constructor(
 
     fun stopPlay() {
         viewModelScope.launch {
-            player?.stop()
-            player?.release()
-            player = null
-            _recordState.emit(RecordState.RECORDED)
+            try {
+                player?.stop()
+                player?.release()
+                player = null
+                _recordState.emit(RecordState.RECORDED)
+            } catch (e: Exception) {
+                _recordState.emit(RecordState.RECORDED)
+                _errorFlow.emit(e)
+            }
         }
     }
 
     fun getNext() {
         viewModelScope.launch {
-            _recordState.emit(RecordState.LOADING)
-            if (uiState.value is RecordUiState.Success) {
-                uiState.value.let {
-                    if (index == size) {
-                        _recordState.emit(RecordState.FINISHING)
-                        return@launch
+            try {
+                _recordState.emit(RecordState.LOADING)
+                if (uiState.value is RecordUiState.Success) {
+                    uiState.value.let {
+                        if (index == size) {
+                            _recordState.emit(RecordState.FINISHING)
+                            return@launch
+                        }
                     }
                 }
-            }
-            if (repository.setFile(index)) {
-                fileName = "$fileDir/${index + 1}}.m4a"
-                _recordContent.emit(Pair(index + 1, repository.getScript(index + 1)))
-                _recordState.emit(RecordState.IDLE)
+                if (repository.uploadRecord(index)) {
+                    fileName = "$fileDir/${index + 1}}.m4a"
+                    _recordContent.emit(Pair(index + 1, repository.getScript(index + 1)))
+                    _recordState.emit(RecordState.IDLE)
+                }
+            } catch (e: Exception) {
+                _recordState.emit(RecordState.RECORDED)
+                _errorFlow.emit(e)
             }
         }
     }
 
     fun finishRecord(name: String, pitch: Float) {
         viewModelScope.launch {
-            _recordState.emit(RecordState.LOADING)
-            if (repository.finishRecord(name, pitch)) {
-                _recordState.emit(RecordState.FINISHED)
-            } else {
+            try {
+                _recordState.emit(RecordState.LOADING)
+                if (repository.finishRecord(name, pitch.roundToInt())) {
+                    _recordState.emit(RecordState.FINISHED)
+                } else {
+                    _recordState.emit(RecordState.RECORDED)
+                }
+            } catch (e: Exception) {
                 _recordState.emit(RecordState.RECORDED)
+                _errorFlow.emit(e)
             }
         }
     }

@@ -15,21 +15,28 @@ class DefaultUserRepository
     @Inject
     constructor(
         private val api: VridgeApi,
-        private val database: InfoDatabase,
         private val auth: FirebaseAuth
     ) : UserRepository {
         override suspend fun login(token: String): Boolean {
-            val data = LoginDTO(token)
-            val result = api.login(data)
-            return result.success
+            return try {
+                val data = LoginDTO(token)
+                api.login(data)
+                true
+            } catch (e: Exception) {
+                false
+            }
         }
 
         override suspend fun unregister(): Boolean {
-            val uid = getUid()
-            val data = UidDTO(uid)
+            return try {
+                val uid = getUid()
+                val data = UidDTO(uid)
 
-            val result = api.unregister(data)
-            return result.success
+                api.unregister(data)
+                true
+            } catch (e: Exception) {
+                false
+            }
         }
 
         override fun getCurrentUser(): FirebaseUser? {
@@ -45,7 +52,11 @@ class DefaultUserRepository
         }
 
         override suspend fun getUserInfo(): User {
-            val uid = getUid()
-            return database.getUser(uid)
+            try {
+                val uid = getUid()
+                return api.getUserInfo(uid)
+            } catch (e: Exception) {
+                throw e
+            }
         }
     }

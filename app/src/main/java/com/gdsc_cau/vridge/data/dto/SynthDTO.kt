@@ -5,6 +5,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SynthDTO(
-    @SerialName("uid") val uid: String,
-    @SerialName("vid") val vid: List<String>,
+    val uid: String,
+    val vids: List<String>,
+    val name: String,
+    val pitch: Int,
+    val language: String
 )

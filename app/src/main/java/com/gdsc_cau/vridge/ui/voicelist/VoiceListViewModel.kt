@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.math.roundToInt
 
 @HiltViewModel
 class VoiceListViewModel @Inject constructor(
@@ -47,14 +48,10 @@ class VoiceListViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val state = _uiState.value
-                val synthVoiceId = repository.synthesize(voiceList)
 
                 if (state !is VoiceListUiState.Success) return@launch
                 _uiState.value = VoiceListUiState.Success(
-                    voiceList = state.voiceList + Voice(
-                        id = synthVoiceId,
-                        name = name
-                    )
+                    voiceList = state.voiceList + repository.synthesize(voiceList, name, pitch.roundToInt())
                 )
             } catch (e: Exception) {
                 _errorFlow.emit(e)
