@@ -159,16 +159,16 @@ fun GridVoiceList(
             contentPadding = PaddingValues(8.dp)
         ) {
             items(voices.size, key = { it }) { index ->
-                val selected = selectedIds.value.contains(voices[index].id)
+                val selected = selectedIds.value.contains(voices[index].vid)
                 VoiceListItem(
                     voices[index],
                     selected,
                     Modifier.clickable {
                         if (inSelectionMode.value) {
                             if (selected) {
-                                selectedIds.value -= voices[index].id
+                                selectedIds.value -= voices[index].vid
                             } else if (selectedIds.value.size < 2) {
-                                selectedIds.value += voices[index].id
+                                selectedIds.value += voices[index].vid
                             }
                         } else {
                             onVoiceClick(voices[index])
@@ -281,37 +281,4 @@ fun VoiceListItem(
 @Composable
 fun EmptyVoiceListPreview() {
     EmptyVoiceList {}
-}
-
-@Preview
-@Composable
-fun GridVoiceListPreview() {
-    GridVoiceList(
-        voices = listOf(
-            Voice("1", "Voice 1"),
-            Voice("2", "Voice 2"),
-            Voice("3", "Voice 3"),
-            Voice("4", "Voice 4"),
-            Voice("5", "Voice 5"),
-            Voice("6", "Voice 6"),
-            Voice("7", "Voice 7"),
-            Voice("8", "Voice 8"),
-            Voice("9", "Voice 9"),
-            Voice("10", "Voice 10"),
-            Voice("11", "Voice 11"),
-            Voice("12", "Voice 12"),
-            Voice("13", "Voice 13"),
-            Voice("14", "Voice 14"),
-            Voice("15", "Voice 15"),
-            Voice("16", "Voice 16"),
-            Voice("17", "Voice 17"),
-            Voice("18", "Voice 18"),
-            Voice("19", "Voice 19"),
-            Voice("20", "Voice 20"),
-        ),
-        onRecordClick = {},
-        onSynthClick = { _, _, _ -> },
-        onVoiceClick = {},
-        onHideBottomBar = {}
-    )
 }
