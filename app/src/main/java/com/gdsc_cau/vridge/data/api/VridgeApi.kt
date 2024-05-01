@@ -2,7 +2,6 @@ package com.gdsc_cau.vridge.data.api
 
 import com.gdsc_cau.vridge.data.dto.LoginDTO
 import com.gdsc_cau.vridge.data.dto.SynthDTO
-import com.gdsc_cau.vridge.data.models.ApiResponse
 import com.gdsc_cau.vridge.data.dto.TtsDTO
 import com.gdsc_cau.vridge.data.dto.UidDTO
 import com.gdsc_cau.vridge.data.dto.RecordingDTO
