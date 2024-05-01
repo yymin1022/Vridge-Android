@@ -4,11 +4,15 @@ import android.content.Context
 import com.gdsc_cau.vridge.data.api.VridgeApi
 import com.gdsc_cau.vridge.data.database.FileStorage
 import com.gdsc_cau.vridge.data.database.InfoDatabase
+import com.gdsc_cau.vridge.data.dto.RecordingDTO
 import com.gdsc_cau.vridge.data.dto.SynthDTO
 import com.gdsc_cau.vridge.data.dto.VoiceDTO
 import com.gdsc_cau.vridge.data.models.Voice
+import com.gdsc_cau.vridge.ui.util.InvalidUidException
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.FileInputStream
 import java.util.UUID
 import javax.inject.Inject
@@ -51,39 +55,43 @@ constructor(
         return true
     }
 
-    override suspend fun setFile(index: Int): Boolean {
-        val uid = getUid() ?: return false
-        val vid = this.vid ?: return false
+    override suspend fun uploadRecord(index: Int): Boolean {
+        val uid = getUid() ?: throw InvalidUidException()
+        val vid = this.vid ?: throw IllegalStateException("No file to upload")
         val fileName = "$path/$index.m4a"
-        val fileReader = FileInputStream(fileName)
-        val data = ByteArray(fileReader.available())
-        fileReader.read(data)
-        return storage.uploadFile(uid, vid, "$index.m4a", data)
+
+        return withContext(Dispatchers.IO) {
+            val fileReader = FileInputStream(fileName)
+            val data = ByteArray(fileReader.available())
+            fileReader.read(data)
+            fileReader.close()
+
+            api.uploadRecordingVoice(RecordingDTO(uid, vid, index))
+            storage.uploadFile(uid, vid, "$index.m4a", data)
+        }
     }
 
-    override suspend fun finishRecord(name: String, pitch: Float): Boolean {
-        val uid = getUid() ?: return false
-        val vid = this.vid ?: return false
-        val data = VoiceDTO(uid, vid)
-        database.saveVoice(uid, vid, name, pitch)
-        return api.uploadTrainingVoice(data)
+    override suspend fun finishRecord(name: String, pitch: Int): Boolean {
+        val uid = getUid() ?: throw InvalidUidException()
+        val vid = this.vid ?: throw IllegalStateException("No file to upload")
+
+        api.finishRecordingVoice(VoiceDTO(uid, vid, name, pitch, "KOR"))
+        this.vid = null
+        this.path = null
+        return true
     }
 
-    override suspend fun synthesize(vid: List<String>): String {
-        val uid = getUid() ?: return ""
-        val data = SynthDTO(uid, vid)
+    override suspend fun synthesize(vid: List<String>, name: String, pitch: Int): Voice {
+        val uid = getUid() ?: throw InvalidUidException()
+        val data = SynthDTO(uid, vid, name, pitch, "KOR")
 
         return api.synthesizeVoice(data)
     }
 
     override suspend fun getVoiceList(): List<Voice> {
-        val uid = getUid() ?: return emptyList()
+        val uid = getUid() ?: throw InvalidUidException()
 
-        val result = database.getVoiceList(uid).map { (vid, name) ->
-            Voice(vid, name)
-        }
-
-        return result
+        return api.getVoiceList(uid).voiceList
     }
 
     private fun getUid(): String? {
