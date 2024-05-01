@@ -5,9 +5,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class TtsDTO(
-    @SerialName("text") val text: String,
-    @SerialName("uid") val uid: String,
-    @SerialName("vid") val vid: String,
-    @SerialName("tid") val tid: String,
-    @SerialName("pitch") val pitch: Int,
+    val text: String,
+    val uid: String,
+    val vid: String,
+    val tid: String,
+    val pitch: Int,
+    val timestamp: Long = System.currentTimeMillis()
 )
