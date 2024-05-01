@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class LoginDTO(
-    @SerialName("token") val token: String,
+    val token: String,
 )
