@@ -163,7 +163,7 @@ fun GridVoiceList(
                 VoiceListItem(
                     voices[index],
                     selected,
-                    Modifier.clickable {
+                    Modifier.clickable(enabled = voices[index].status) {
                         if (inSelectionMode.value) {
                             if (selected) {
                                 selectedIds.value -= voices[index].vid
@@ -252,7 +252,7 @@ fun VoiceListItem(
         modifier = modifier
             .padding(8.dp)
             .aspectRatio(1f),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp, pressedElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp, pressedElevation = 2.dp),
     ) {
         Surface {
             if (selected) {
