@@ -32,6 +32,12 @@ interface VridgeApi {
         @Query("uid") uid: String
     ): User
 
+    @GET("/api/v1/voice/single")
+    suspend fun getVoice(
+        @Query("uid") uid: String,
+        @Query("vid") vid: String
+    ): Voice
+
     @GET("api/v1/voice/list")
     suspend fun getVoiceList(
         @Query("uid") uid: String
