@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -42,22 +43,18 @@ class TalkViewModel @AssistedInject constructor(
     init {
         viewModelScope.launch {
             flow {
-                emit(repository.getTalks(vid))
-            }.map { talks ->
-                TalkUiState.Success(talks)
+                val voice = repository.getVoice(vid)
+                val talks = repository.getTalks(vid)
+                emit(Pair(voice, talks))
+            }.map { pair ->
+                TalkUiState.Success(talks = pair.second, voice = pair.first)
             }.catch { throwable ->
                 _errorFlow.emit(throwable)
             }.collect { _uiState.value = it }
         }
     }
 
-    fun onPlay(start: Boolean, ttsId: String = "") = if (start) {
-        startPlaying(ttsId)
-    } else {
-        stopPlaying()
-    }
-
-    private fun startPlaying(ttsId: String) {
+    fun startPlaying(ttsId: String) {
         viewModelScope.launch {
             val url = repository.getTtsUrl(vid, ttsId)
 
@@ -79,7 +76,7 @@ class TalkViewModel @AssistedInject constructor(
         }
     }
 
-    private fun stopPlaying() {
+    fun stopPlaying() {
         player?.release()
         player = null
     }

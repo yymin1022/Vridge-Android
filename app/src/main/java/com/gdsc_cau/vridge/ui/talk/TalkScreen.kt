@@ -34,11 +34,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gdsc_cau.vridge.R
 import com.gdsc_cau.vridge.data.models.Tts
+import com.gdsc_cau.vridge.data.models.Voice
 import com.gdsc_cau.vridge.ui.theme.Black
 import com.gdsc_cau.vridge.ui.theme.Grey3
 import com.gdsc_cau.vridge.ui.theme.Grey4
@@ -55,7 +57,7 @@ enum class VoiceState {
 }
 
 @Composable
-fun TalkScreen(
+fun TalkRoute(
     voiceId: String,
     onBackClick: () -> Unit,
     onShowErrorSnackBar: (Throwable?) -> Unit,
@@ -66,6 +68,10 @@ fun TalkScreen(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    LaunchedEffect(true) {
+        viewModel.errorFlow.collectLatest { throwable -> onShowErrorSnackBar(throwable) }
+    }
+
     when (uiState) {
         is TalkUiState.Loading -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -73,25 +79,36 @@ fun TalkScreen(
             }
         }
         is TalkUiState.Success -> {
-            Box(modifier = Modifier.fillMaxSize()) {
-                VridgeTopBar(title = "", type = TopBarType.BACK, onBackClick = onBackClick)
-                TalkHistory((uiState as TalkUiState.Success).talks, viewModel)
-                TalkInput(onSendClicked = {
-                    viewModel.createTts(it)
-                })
-            }
+            TalkScreen(
+                uiState = uiState as TalkUiState.Success,
+                onBackClick = onBackClick,
+                onPlay = { viewModel.startPlaying(it) },
+                onStop = { viewModel.stopPlaying() },
+                onCreateTts = { viewModel.createTts(it) }
+            )
         }
-    }
-
-
-
-    LaunchedEffect(true) {
-        viewModel.errorFlow.collectLatest { throwable -> onShowErrorSnackBar(throwable) }
     }
 }
 
 @Composable
-fun TalkHistory(talks: List<Tts>, viewModel: TalkViewModel) {
+fun TalkScreen(
+    uiState: TalkUiState.Success,
+    onBackClick: () -> Unit,
+    onPlay: (String) -> Unit,
+    onStop: () -> Unit,
+    onCreateTts: (String) -> Unit
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        VridgeTopBar(title = uiState.voice.name, type = TopBarType.BACK, onBackClick = onBackClick)
+        TalkHistory(uiState.talks, onPlay, onStop)
+        TalkInput(onSendClicked = {
+            onCreateTts(it)
+        })
+    }
+}
+
+@Composable
+fun TalkHistory(talks: List<Tts>, onPlay: (String) -> Unit, onStop: () -> Unit) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -99,13 +116,13 @@ fun TalkHistory(talks: List<Tts>, viewModel: TalkViewModel) {
         verticalArrangement = Arrangement.Bottom,
     ) {
         items(items = talks) {
-            TalkCard(it, viewModel)
+            TalkCard(it, onPlay, onStop)
         }
     }
 }
 
 @Composable
-private fun TalkCard(talkData: Tts, viewModel: TalkViewModel) {
+private fun TalkCard(talkData: Tts, onPlay: (String) -> Unit, onStop: () -> Unit) {
     val voiceState = when (talkData.status) {
         true -> VoiceState.VOICE_READY
         false -> VoiceState.VOICE_LOADING
@@ -141,7 +158,7 @@ private fun TalkCard(talkData: Tts, viewModel: TalkViewModel) {
                 Text(text = talkData.text)
             }
             TextCardController(voiceState = voiceState) { start ->
-                viewModel.onPlay(start, talkData.id)
+                if (start) onPlay(talkData.id) else onStop()
             }
         }
     }
@@ -167,7 +184,7 @@ private fun TextCardController(voiceState: VoiceState, onPlay: (Boolean) -> Unit
             )
             .fillMaxHeight()
             .width(50.dp)
-            .clickable {
+            .clickable(voiceState != VoiceState.VOICE_LOADING) {
                 playingStatus.value = !playingStatus.value
                 onPlay(playingStatus.value)
             }
@@ -268,4 +285,38 @@ fun TalkInputDecor(innerTextField: @Composable () -> Unit) {
             innerTextField()
         }
     }
+}
+
+@Preview
+@Composable
+fun TalkScreenPreview() {
+    TalkScreen(
+        uiState = TalkUiState.Success(
+            talks = listOf(
+                Tts(
+                    id = "1",
+                    text = "Hello",
+                    timestamp = 5,
+                    status = true
+                ),
+                Tts(
+                    id = "2",
+                    text = "Hi",
+                    timestamp = 1,
+                    status = false
+                )
+            ),
+            voice = Voice(
+                vid = "1",
+                name = "Voice",
+                pitch = 1,
+                language = "KOR",
+                status = true
+            )
+        ),
+        onBackClick = {},
+        onPlay = {},
+        onStop = {},
+        onCreateTts = {}
+    )
 }

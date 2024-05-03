@@ -24,7 +24,6 @@ import com.gdsc_cau.vridge.ui.profile.ProfileRoute
 import com.gdsc_cau.vridge.ui.profile.ProfileScreen
 import com.gdsc_cau.vridge.ui.record.RecordRoute
 import com.gdsc_cau.vridge.ui.talk.TalkRoute
-import com.gdsc_cau.vridge.ui.talk.TalkScreen
 import com.gdsc_cau.vridge.ui.voicelist.VoiceListRoute
 import kotlinx.coroutines.launch
 import java.net.UnknownHostException
@@ -85,11 +84,11 @@ fun MainScreen(
                         listOf(
                             navArgument("id") {
                                 type = NavType.StringType
-                            }
+                            },
                         )
                     ) {
                         val voiceId = it.arguments?.getString("id") ?: ""
-                        TalkScreen(
+                        TalkRoute(
                             voiceId = voiceId,
                             onBackClick = { navigator.popBackStackIfNotHome() },
                             onShowErrorSnackBar = onShowErrorSnackBar
