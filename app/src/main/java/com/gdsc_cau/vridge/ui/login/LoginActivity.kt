@@ -23,7 +23,7 @@ class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            viewModel.checkLastLogin(applicationContext)
+            viewModel.checkLastLogin()
             val isLoggedIn = viewModel.loginState.collectAsStateWithLifecycle().value
 
             VridgeTheme {

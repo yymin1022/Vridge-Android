@@ -1,6 +1,5 @@
 package com.gdsc_cau.vridge.ui.login
 
-import android.content.Context
 import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
@@ -9,10 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult
 import com.gdsc_cau.vridge.data.repository.UserRepository
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -25,7 +21,7 @@ class LoginViewModel @Inject constructor(private val repository: UserRepository)
     val loginState: StateFlow<Boolean>
         get() = _loginState
 
-    fun checkLastLogin(context: Context) {
+    fun checkLastLogin() {
         viewModelScope.launch {
             val account = repository.getCurrentUser()
             if (account != null) {

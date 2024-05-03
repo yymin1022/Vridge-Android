@@ -96,6 +96,7 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore:24.10.2")
     implementation("com.google.firebase:firebase-firestore-ktx:24.10.2")
     implementation("com.google.firebase:firebase-storage-ktx:20.3.0")
+    implementation("com.google.firebase:firebase-messaging-ktx:23.4.1")
     implementation("com.google.android.gms:play-services-auth:20.7.0")
 
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
