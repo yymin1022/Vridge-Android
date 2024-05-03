@@ -40,6 +40,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gdsc_cau.vridge.R
 import com.gdsc_cau.vridge.data.models.Tts
+import com.gdsc_cau.vridge.data.models.Voice
 import com.gdsc_cau.vridge.ui.theme.Black
 import com.gdsc_cau.vridge.ui.theme.Grey3
 import com.gdsc_cau.vridge.ui.theme.Grey4
@@ -98,7 +99,7 @@ fun TalkScreen(
     onCreateTts: (String) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        VridgeTopBar(title = "", type = TopBarType.BACK, onBackClick = onBackClick)
+        VridgeTopBar(title = uiState.voice.name, type = TopBarType.BACK, onBackClick = onBackClick)
         TalkHistory(uiState.talks, onPlay, onStop)
         TalkInput(onSendClicked = {
             onCreateTts(it)
@@ -304,6 +305,13 @@ fun TalkScreenPreview() {
                     timestamp = 1,
                     status = false
                 )
+            ),
+            voice = Voice(
+                vid = "1",
+                name = "Voice",
+                pitch = 1,
+                language = "KOR",
+                status = true
             )
         ),
         onBackClick = {},
