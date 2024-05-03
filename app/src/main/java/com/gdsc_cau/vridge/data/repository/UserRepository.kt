@@ -15,4 +15,6 @@ interface UserRepository {
     fun getUid(): String
 
     suspend fun getUserInfo(): User
+
+    suspend fun setMessageToken(token: String): Boolean
 }
