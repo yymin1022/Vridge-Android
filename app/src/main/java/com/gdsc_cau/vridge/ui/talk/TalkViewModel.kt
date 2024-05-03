@@ -43,6 +43,7 @@ class TalkViewModel @AssistedInject constructor(
         viewModelScope.launch {
             flow {
                 emit(repository.getTalks(vid))
+
             }.map { talks ->
                 TalkUiState.Success(talks)
             }.catch { throwable ->
@@ -51,13 +52,7 @@ class TalkViewModel @AssistedInject constructor(
         }
     }
 
-    fun onPlay(start: Boolean, ttsId: String = "") = if (start) {
-        startPlaying(ttsId)
-    } else {
-        stopPlaying()
-    }
-
-    private fun startPlaying(ttsId: String) {
+    fun startPlaying(ttsId: String) {
         viewModelScope.launch {
             val url = repository.getTtsUrl(vid, ttsId)
 
@@ -79,7 +74,7 @@ class TalkViewModel @AssistedInject constructor(
         }
     }
 
-    private fun stopPlaying() {
+    fun stopPlaying() {
         player?.release()
         player = null
     }
