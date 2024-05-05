@@ -48,8 +48,13 @@ interface VridgeApi {
         @Body data: RecordingDTO
     ): JsonObject
 
+    @GET("api/v1/voice/record")
+    suspend fun getRecordingStatus(
+        @Query("uid") uid: String
+    ): RecordingDTO
+
     @POST("api/v1/voice/delete")
-    suspend fun clearRecordingVoice(
+    suspend fun removeRecordingVoice(
         @Body data: UidDTO
     ): JsonObject
 
