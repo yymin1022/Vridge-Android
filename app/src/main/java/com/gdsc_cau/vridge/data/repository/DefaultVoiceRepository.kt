@@ -13,6 +13,9 @@ import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.io.FileInputStream
 import java.util.UUID
 import javax.inject.Inject
@@ -74,17 +77,26 @@ constructor(
         val uid = getUid() ?: throw InvalidUidException()
         val vid = this.vid ?: throw IllegalStateException("No file to upload")
 
-        api.finishRecordingVoice(VoiceDTO(uid, vid, name, pitch, "KOR"))
+        api.finishRecordingVoice(VoiceDTO(uid, vid, name, pitch, "KOR")).enqueue(object: Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {}
+            override fun onFailure(call: Call<Void>, t: Throwable) {}
+        })
+
         this.vid = null
         this.path = null
+
         return true
     }
 
     override suspend fun synthesize(vid: List<String>, name: String, pitch: Int): Voice {
         val uid = getUid() ?: throw InvalidUidException()
         val data = SynthDTO(uid, vid, name, pitch, "KOR")
+        api.synthesizeVoice(data).enqueue(object: Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {}
+            override fun onFailure(call: Call<Void>, t: Throwable) {}
+        })
 
-        return api.synthesizeVoice(data)
+        return Voice("", name, pitch, "KOR", false)
     }
 
     override suspend fun getVoiceList(): List<Voice> {
