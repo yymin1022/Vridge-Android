@@ -7,8 +7,8 @@
     <string name="voice_empty_center">There is no voice in our app.</string>
     <string name="voice_empty_add_btn">Make Your Voice</string>
     <string name="voice_title_grid">Choose your voice</string>
-    <string name="voice_add_btn">Add</string>
-    <string name="voice_synth_btn">Synth</string>
+    <string name="voice_btn_add">Add</string>
+    <string name="voice_btn_synth">Synth</string>
 
     <string name="profile_title">Profile</string>
     <string name="profile_list_item_email">Email</string>
@@ -19,10 +19,17 @@
     <string name="profile_list_item_signout_description">Sign Out from Vridge Account</string>
     <string name="profile_list_item_signout_title">Sign Out</string>
 
+    <string name="record_title">Voice Recording</string>
     <string name="record_btn_next">Next</string>
     <string name="record_btn_play">Play</string>
     <string name="record_btn_stop">Stop</string>
     <string name="record_btn_finish">Finish</string>
+
+    <string name="dialog_voice_name_hint">Voice Name</string>
+    <string name="dialog_voice_label_man">Man</string>
+    <string name="dialog_voice_label_woman">Woman</string>
+    <string name="dialog_btn_cancel">Cancel</string>
+    <string name="dialog_btn_confirm">Confirm</string>
 
     <string name="error_message_network">Network issue occurred.</string>
     <string name="error_message_unknown">Unknown error occurred.</string>
