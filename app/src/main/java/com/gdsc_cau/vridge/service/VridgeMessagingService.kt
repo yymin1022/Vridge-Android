@@ -11,12 +11,14 @@ import com.gdsc_cau.vridge.data.repository.UserRepository
 import com.gdsc_cau.vridge.ui.main.MainActivity
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
+@AndroidEntryPoint
 class VridgeMessagingService: FirebaseMessagingService() {
     @Inject
     lateinit var repository: UserRepository
