@@ -25,12 +25,18 @@
     <string name="record_btn_stop">Stop</string>
     <string name="record_btn_finish">Finish</string>
 
-    <string name="dialog_voice_name_hint">Voice Name</string>
-    <string name="dialog_voice_label_man">Man</string>
-    <string name="dialog_voice_label_woman">Woman</string>
-    <string name="dialog_btn_cancel">Cancel</string>
-    <string name="dialog_btn_confirm">Confirm</string>
+    <string name="dialog_voice_set_name_hint">Voice Name</string>
+    <string name="dialog_voice_set_label_man">Man</string>
+    <string name="dialog_voice_set_label_woman">Woman</string>
+    <string name="dialog_voice_set_btn_cancel">Cancel</string>
+    <string name="dialog_voice_set_btn_confirm">Confirm</string>
+
+    <string name="dialog_resume_record_title">Left Recording Files</string>
+    <string name="dialog_resume_record_content">Do you want to resume previous recording?\n(If you choose no, previous files will be deleted.)</string>
+    <string name="dialog_resume_record_btn_confirm">Yes</string>
+    <string name="dialog_resume_record_btn_dismiss">No</string>
 
     <string name="error_message_network">Network issue occurred.</string>
     <string name="error_message_unknown">Unknown error occurred.</string>
+    <string name="error_message_no_vid">No file to upload.</string>
 </resources>
