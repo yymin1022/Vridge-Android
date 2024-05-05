@@ -210,7 +210,7 @@ fun GridVoiceList(
                     modifier = Modifier.padding(horizontal = 8.dp)
                 ) {
                     Text(
-                        stringResource(R.string.voice_add_btn),
+                        stringResource(R.string.voice_btn_add),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = White,
@@ -222,7 +222,7 @@ fun GridVoiceList(
                     elevation = ButtonDefaults.buttonElevation(4.dp)
                 ) {
                     Text(
-                        stringResource(R.string.voice_synth_btn),
+                        stringResource(R.string.voice_btn_synth),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = White,
