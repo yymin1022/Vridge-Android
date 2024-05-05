@@ -45,10 +45,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gdsc_cau.vridge.R
 import com.gdsc_cau.vridge.data.models.Voice
-import com.gdsc_cau.vridge.ui.record.RecordState
 import com.gdsc_cau.vridge.ui.record.VoiceSettingDialog
+import com.gdsc_cau.vridge.ui.theme.Grey1
+import com.gdsc_cau.vridge.ui.theme.Grey3
 import com.gdsc_cau.vridge.ui.theme.OnPrimaryLight
 import com.gdsc_cau.vridge.ui.theme.Primary
+import com.gdsc_cau.vridge.ui.theme.PrimaryLight
+import com.gdsc_cau.vridge.ui.theme.VridgeTheme
 import com.gdsc_cau.vridge.ui.theme.White
 import com.gdsc_cau.vridge.ui.util.TopBarType
 import com.gdsc_cau.vridge.ui.util.VridgeTopBar
@@ -95,13 +98,13 @@ fun VoiceListRoute(
 
 @Composable
 fun EmptyVoiceList(onRecordClick: () -> Unit) {
-    VridgeTopBar(title = "Make your voice", type = TopBarType.NONE)
+    VridgeTopBar(title = stringResource(R.string.voice_title_empty), type = TopBarType.NONE)
     Column(
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxSize()
     ) {
-        Text(stringResource(id = R.string.empty_voice_list))
+        Text(stringResource(R.string.voice_empty_center))
         ElevatedButton(
             onClick = onRecordClick,
             colors = ButtonDefaults.elevatedButtonColors(containerColor = Primary, contentColor = White),
@@ -113,7 +116,7 @@ fun EmptyVoiceList(onRecordClick: () -> Unit) {
                 contentDescription = null,
                 modifier = Modifier.padding(end = 4.dp)
             )
-            Text(stringResource(R.string.btn_add_voice), modifier = Modifier.padding(horizontal = 4.dp))
+            Text(stringResource(R.string.voice_empty_add_btn), modifier = Modifier.padding(horizontal = 4.dp))
         }
     }
 }
@@ -149,7 +152,7 @@ fun GridVoiceList(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        VridgeTopBar(title = "Choose your voice", type = TopBarType.NONE)
+        VridgeTopBar(title = stringResource(R.string.voice_title_grid), type = TopBarType.NONE)
         LazyVerticalGrid(
             modifier =
             Modifier
@@ -163,6 +166,7 @@ fun GridVoiceList(
                 VoiceListItem(
                     voices[index],
                     selected,
+                    voices[index].status,
                     Modifier.clickable(enabled = voices[index].status) {
                         if (inSelectionMode.value) {
                             if (selected) {
@@ -206,7 +210,7 @@ fun GridVoiceList(
                     modifier = Modifier.padding(horizontal = 8.dp)
                 ) {
                     Text(
-                        "Add",
+                        stringResource(R.string.voice_btn_add),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = White,
@@ -218,7 +222,7 @@ fun GridVoiceList(
                     elevation = ButtonDefaults.buttonElevation(4.dp)
                 ) {
                     Text(
-                        "Synth",
+                        stringResource(R.string.voice_btn_synth),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = White,
@@ -246,15 +250,19 @@ fun GridVoiceList(
 fun VoiceListItem(
     voice: Voice,
     selected: Boolean,
+    enabled: Boolean,
     modifier: Modifier
 ) {
     Card(
         modifier = modifier
             .padding(8.dp)
             .aspectRatio(1f),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp, pressedElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp, pressedElevation = 2.dp)
     ) {
-        Surface {
+        Surface(
+            color = if (enabled) PrimaryLight else Grey3,
+            contentColor = if (enabled) OnPrimaryLight else Grey1
+        ) {
             if (selected) {
                 Icon(
                     Icons.Filled.Check,
@@ -277,8 +285,36 @@ fun VoiceListItem(
     }
 }
 
-@Preview
+@Preview(backgroundColor = 0xFFFFFFFF, showBackground = true)
 @Composable
 fun EmptyVoiceListPreview() {
-    EmptyVoiceList {}
+    VridgeTheme {
+        EmptyVoiceList {}
+    }
+}
+
+@Preview(backgroundColor = 0xFFFFFFFF, showBackground = true)
+@Composable
+fun GridVoiceListPreview() {
+    VridgeTheme {
+        GridVoiceList(
+            voices = listOf(
+                Voice("1", "Voice 1", 0, "KOR", true),
+                Voice("2", "Voice 2", 0, "KOR", true),
+                Voice("3", "Voice 3", 0, "KOR", true),
+                Voice("4", "Voice 4", 0, "KOR", true),
+                Voice("5", "Voice 5", 0, "KOR", true),
+                Voice("6", "Voice 6", 0, "KOR", true),
+                Voice("7", "Voice 7", 0, "KOR", true),
+                Voice("8", "Voice 8", 0, "KOR", true),
+                Voice("9", "Voice 9", 0, "KOR", true),
+                Voice("10", "Voice 10", 0, "KOR", false),
+
+                ),
+            onRecordClick = {},
+            onSynthClick = { _, _, _ -> },
+            onVoiceClick = {},
+            onHideBottomBar = {}
+        )
+    }
 }

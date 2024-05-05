@@ -30,10 +30,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.gdsc_cau.vridge.R
 import com.gdsc_cau.vridge.ui.theme.OnPrimary
 import com.gdsc_cau.vridge.ui.theme.OnPrimaryLight
 import com.gdsc_cau.vridge.ui.theme.Primary
@@ -100,13 +102,15 @@ fun DialogContent(
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         OutlinedTextField(
-            label = { Text("Voice Name") },
+            label = { Text(stringResource(R.string.dialog_voice_name_hint)) },
             value = text,
             onValueChange = onTextChanged
         )
-        Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Man")
-            Text("Woman")
+        Row(modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(stringResource(R.string.dialog_voice_label_man))
+            Text(stringResource(R.string.dialog_voice_label_woman))
         }
         Slider(
             value = sliderPosition,
@@ -130,7 +134,7 @@ fun DialogContent(
                 onClick = onDismissRequest,
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryLight)
             ) {
-                Text("Cancel", color = OnPrimaryLight)
+                Text(stringResource(R.string.dialog_btn_cancel), color = OnPrimaryLight)
             }
             Button(
                 onClick = {
@@ -139,14 +143,14 @@ fun DialogContent(
                 modifier = Modifier.padding(start = 16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Primary)
             ) {
-                Text("Confirm", color = OnPrimary)
+                Text(stringResource(R.string.dialog_btn_confirm), color = OnPrimary)
             }
         }
     }
 }
 
 @Composable
-@Preview
+@Preview(showBackground = true)
 fun VoiceSettingDialogPreview() {
     var text by remember { mutableStateOf("Voice Name") }
     var sliderPosition by remember { mutableFloatStateOf(0f) }

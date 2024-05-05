@@ -45,6 +45,7 @@ import com.gdsc_cau.vridge.ui.theme.Black
 import com.gdsc_cau.vridge.ui.theme.Grey3
 import com.gdsc_cau.vridge.ui.theme.Grey4
 import com.gdsc_cau.vridge.ui.theme.PrimaryUpperLight
+import com.gdsc_cau.vridge.ui.theme.VridgeTheme
 import com.gdsc_cau.vridge.ui.theme.White
 import com.gdsc_cau.vridge.ui.util.TopBarType
 import com.gdsc_cau.vridge.ui.util.VridgeTopBar
@@ -287,36 +288,38 @@ fun TalkInputDecor(innerTextField: @Composable () -> Unit) {
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun TalkScreenPreview() {
-    TalkScreen(
-        uiState = TalkUiState.Success(
-            talks = listOf(
-                Tts(
-                    id = "1",
-                    text = "Hello",
-                    timestamp = 5,
-                    status = true
+    VridgeTheme {
+        TalkScreen(
+            uiState = TalkUiState.Success(
+                talks = listOf(
+                    Tts(
+                        id = "1",
+                        text = "Hello",
+                        timestamp = 5,
+                        status = true
+                    ),
+                    Tts(
+                        id = "2",
+                        text = "Hi",
+                        timestamp = 1,
+                        status = false
+                    )
                 ),
-                Tts(
-                    id = "2",
-                    text = "Hi",
-                    timestamp = 1,
-                    status = false
+                voice = Voice(
+                    vid = "1",
+                    name = "Voice",
+                    pitch = 1,
+                    language = "KOR",
+                    status = true
                 )
             ),
-            voice = Voice(
-                vid = "1",
-                name = "Voice",
-                pitch = 1,
-                language = "KOR",
-                status = true
-            )
-        ),
-        onBackClick = {},
-        onPlay = {},
-        onStop = {},
-        onCreateTts = {}
-    )
+            onBackClick = {},
+            onPlay = {},
+            onStop = {},
+            onCreateTts = {}
+        )
+    }
 }

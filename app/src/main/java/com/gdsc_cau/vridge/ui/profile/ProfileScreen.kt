@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -28,6 +29,7 @@ import com.gdsc_cau.vridge.R
 import com.gdsc_cau.vridge.data.models.User
 import com.gdsc_cau.vridge.ui.login.LoginActivity
 import com.gdsc_cau.vridge.ui.theme.Grey3
+import com.gdsc_cau.vridge.ui.theme.VridgeTheme
 import com.gdsc_cau.vridge.ui.util.TopBarType
 import com.gdsc_cau.vridge.ui.util.VridgeTopBar
 import kotlinx.coroutines.flow.collectLatest
@@ -66,7 +68,7 @@ fun ProfileContent(user: User, isLoggedOut: Boolean, onClickLogout: () -> Unit, 
     val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
-        VridgeTopBar(title = "Profile", type = TopBarType.NONE)
+        VridgeTopBar(title = stringResource(R.string.profile_title), type = TopBarType.NONE)
         ProfileList(profileData = user, onClickLogout, onClickUnregister)
     }
 
@@ -142,6 +144,24 @@ fun ProfileListItem(
         Text(
             text = content,
             fontSize = 17.sp
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ProfileScreenPreview() {
+    VridgeTheme {
+        ProfileContent(
+            user = User(
+                uid = "",
+                name = "GDSC CAU",
+                email = "gdsc-cau@gmail.com",
+                cntVoice = 10,
+            ),
+            isLoggedOut = false,
+            onClickLogout = {},
+            onClickUnregister = {}
         )
     }
 }

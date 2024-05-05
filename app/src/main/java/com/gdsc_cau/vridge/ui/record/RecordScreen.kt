@@ -48,6 +48,7 @@ import com.gdsc_cau.vridge.ui.theme.Black
 import com.gdsc_cau.vridge.ui.theme.Grey2
 import com.gdsc_cau.vridge.ui.theme.Grey4
 import com.gdsc_cau.vridge.ui.theme.Primary
+import com.gdsc_cau.vridge.ui.theme.VridgeTheme
 import com.gdsc_cau.vridge.ui.theme.White
 import com.gdsc_cau.vridge.ui.util.LoadingDialog
 import com.gdsc_cau.vridge.ui.util.TopBarType
@@ -118,7 +119,7 @@ fun RecordScreen(
 
     ) {
         VridgeTopBar(
-            title = "Voice Recording",
+            title = stringResource(R.string.record_title),
             type = TopBarType.CLOSE,
             onBackClick = onBackClick
         )
@@ -336,130 +337,142 @@ fun RecordNavigateButton(text: String, clickable: Boolean, onBtnClicked: () -> U
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun RecordScreenIdlePreview() {
-    RecordScreen(
-        uiState = RecordUiState.Success(
-            text = "Hello, World!",
-            index = 1,
-            size = 3,
-            state = RecordState.IDLE
-        ),
-        recorder = null,
-        onBackClick = {},
-        onClickNext = {},
-        onStartRecord = {},
-        onStopRecord = {},
-        onStartPlay = {},
-        onStopPlay = {},
-        onFinishRecord = { _, _ -> }
-    )
+    VridgeTheme {
+        RecordScreen(
+            uiState = RecordUiState.Success(
+                text = "Hello, World!",
+                index = 1,
+                size = 3,
+                state = RecordState.IDLE
+            ),
+            recorder = null,
+            onBackClick = {},
+            onClickNext = {},
+            onStartRecord = {},
+            onStopRecord = {},
+            onStartPlay = {},
+            onStopPlay = {},
+            onFinishRecord = { _, _ -> }
+        )
+    }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun RecordScreenRecordedDonePreview() {
-    RecordScreen(
-        uiState = RecordUiState.Success(
-            text = "Hello, World!",
-            index = 3,
-            size = 3,
-            state = RecordState.RECORDED
-        ),
-        recorder = null,
-        onBackClick = {},
-        onClickNext = {},
-        onStartRecord = {},
-        onStopRecord = {},
-        onStartPlay = {},
-        onStopPlay = {},
-        onFinishRecord = { _, _ -> }
-    )
+    VridgeTheme {
+        RecordScreen(
+            uiState = RecordUiState.Success(
+                text = "Hello, World!",
+                index = 3,
+                size = 3,
+                state = RecordState.RECORDED
+            ),
+            recorder = null,
+            onBackClick = {},
+            onClickNext = {},
+            onStartRecord = {},
+            onStopRecord = {},
+            onStartPlay = {},
+            onStopPlay = {},
+            onFinishRecord = { _, _ -> }
+        )
+    }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun RecordScreenRecordedPreview() {
-    RecordScreen(
-        uiState = RecordUiState.Success(
-            text = "Hello, World!",
-            index = 1,
-            size = 3,
-            state = RecordState.RECORDED
-        ),
-        recorder = null,
-        onBackClick = {},
-        onClickNext = {},
-        onStartRecord = {},
-        onStopRecord = {},
-        onStartPlay = {},
-        onStopPlay = {},
-        onFinishRecord = { _, _ -> }
-    )
+    VridgeTheme {
+        RecordScreen(
+            uiState = RecordUiState.Success(
+                text = "Hello, World!",
+                index = 1,
+                size = 3,
+                state = RecordState.RECORDED
+            ),
+            recorder = null,
+            onBackClick = {},
+            onClickNext = {},
+            onStartRecord = {},
+            onStopRecord = {},
+            onStartPlay = {},
+            onStopPlay = {},
+            onFinishRecord = { _, _ -> }
+        )
+    }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun RecordScreenPlayingPreview() {
-    RecordScreen(
-        uiState = RecordUiState.Success(
-            text = "Hello, World!",
-            index = 1,
-            size = 3,
-            state = RecordState.PLAYING
-        ),
-        recorder = null,
-        onBackClick = {},
-        onClickNext = {},
-        onStartRecord = {},
-        onStopRecord = {},
-        onStartPlay = {},
-        onStopPlay = {},
-        onFinishRecord = { _, _ -> }
-    )
+    VridgeTheme {
+        RecordScreen(
+            uiState = RecordUiState.Success(
+                text = "Hello, World!",
+                index = 1,
+                size = 3,
+                state = RecordState.PLAYING
+            ),
+            recorder = null,
+            onBackClick = {},
+            onClickNext = {},
+            onStartRecord = {},
+            onStopRecord = {},
+            onStartPlay = {},
+            onStopPlay = {},
+            onFinishRecord = { _, _ -> }
+        )
+    }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun RecordScreenLoadingPreview() {
-    RecordScreen(
-        uiState = RecordUiState.Success(
-            text = "Hello, World!",
-            index = 1,
-            size = 3,
-            state = RecordState.LOADING
-        ),
-        recorder = null,
-        onBackClick = {},
-        onClickNext = {},
-        onStartRecord = {},
-        onStopRecord = {},
-        onStartPlay = {},
-        onStopPlay = {},
-        onFinishRecord = { _, _ -> }
-    )
+    VridgeTheme {
+        RecordScreen(
+            uiState = RecordUiState.Success(
+                text = "Hello, World!",
+                index = 1,
+                size = 3,
+                state = RecordState.LOADING
+            ),
+            recorder = null,
+            onBackClick = {},
+            onClickNext = {},
+            onStartRecord = {},
+            onStopRecord = {},
+            onStartPlay = {},
+            onStopPlay = {},
+            onFinishRecord = { _, _ -> }
+        )
+    }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun RecordScreenFinishPreview() {
-    RecordScreen(
-        uiState = RecordUiState.Success(
-            text = "Hello, World!",
-            index = 3,
-            size = 3,
-            state = RecordState.FINISHING
-        ),
-        recorder = null,
-        onBackClick = {},
-        onClickNext = {},
-        onStartRecord = {},
-        onStopRecord = {},
-        onStartPlay = {},
-        onStopPlay = {},
-        onFinishRecord = { _, _ -> }
-    )
+    VridgeTheme {
+        RecordScreen(
+            uiState = RecordUiState.Success(
+                text = "Hello, World!",
+                index = 3,
+                size = 3,
+                state = RecordState.FINISHING
+            ),
+            recorder = null,
+            onBackClick = {},
+            onClickNext = {},
+            onStartRecord = {},
+            onStopRecord = {},
+            onStartPlay = {},
+            onStopPlay = {},
+            onFinishRecord = { _, _ -> }
+        )
+    }
 }
 
 enum class RecordState {
