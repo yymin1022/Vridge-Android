@@ -2,28 +2,22 @@ package com.gdsc_cau.vridge.ui.record
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -102,15 +96,15 @@ fun DialogContent(
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         OutlinedTextField(
-            label = { Text(stringResource(R.string.dialog_voice_name_hint)) },
+            label = { Text(stringResource(R.string.dialog_voice_set_name_hint)) },
             value = text,
             onValueChange = onTextChanged
         )
         Row(modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(stringResource(R.string.dialog_voice_label_man))
-            Text(stringResource(R.string.dialog_voice_label_woman))
+            Text(stringResource(R.string.dialog_voice_set_label_man))
+            Text(stringResource(R.string.dialog_voice_set_label_woman))
         }
         Slider(
             value = sliderPosition,
@@ -134,7 +128,7 @@ fun DialogContent(
                 onClick = onDismissRequest,
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryLight)
             ) {
-                Text(stringResource(R.string.dialog_btn_cancel), color = OnPrimaryLight)
+                Text(stringResource(R.string.dialog_voice_set_btn_cancel), color = OnPrimaryLight)
             }
             Button(
                 onClick = {
@@ -143,7 +137,7 @@ fun DialogContent(
                 modifier = Modifier.padding(start = 16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Primary)
             ) {
-                Text(stringResource(R.string.dialog_btn_confirm), color = OnPrimary)
+                Text(stringResource(R.string.dialog_voice_set_btn_confirm), color = OnPrimary)
             }
         }
     }
