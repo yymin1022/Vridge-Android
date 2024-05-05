@@ -15,6 +15,7 @@ interface UserRepository {
     fun getUid(): String
 
     suspend fun getUserInfo(): User
+    suspend fun getRecordingStatus(): Boolean
 
     suspend fun setMessageToken(token: String): Boolean
 }
