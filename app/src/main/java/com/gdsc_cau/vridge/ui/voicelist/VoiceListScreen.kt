@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -25,6 +26,7 @@ import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,6 +34,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -41,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gdsc_cau.vridge.R
@@ -66,6 +70,20 @@ fun VoiceListRoute(
     viewModel: VoiceListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var dialogState by remember { mutableStateOf(false) }
+
+    val recordClickFunction = {
+        val isRecording = when (uiState) {
+            is VoiceListUiState.Empty -> (uiState as VoiceListUiState.Empty).isRecording
+            is VoiceListUiState.Success -> (uiState as VoiceListUiState.Success).isRecording
+            is VoiceListUiState.Loading -> false
+        }
+        if (isRecording) {
+            dialogState = true
+        } else {
+            onRecordClick()
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         when (uiState) {
@@ -76,18 +94,46 @@ fun VoiceListRoute(
             }
 
             is VoiceListUiState.Empty -> {
-                EmptyVoiceList(onRecordClick)
+                EmptyVoiceList(recordClickFunction)
             }
 
             is VoiceListUiState.Success -> {
                 GridVoiceList(
                     (uiState as VoiceListUiState.Success).voiceList,
-                    onRecordClick,
+                    recordClickFunction,
                     { list, name, pitch -> viewModel.synthesize(list, name, pitch) },
                     onVoiceClick,
                     onHideBottomBar
                 )
             }
+        }
+        if (dialogState) {
+            AlertDialog(
+                properties = DialogProperties(
+                    dismissOnBackPress = true,
+                    dismissOnClickOutside = true
+                ),
+                onDismissRequest = {
+                    dialogState = false
+                },
+                title = { Text(stringResource(R.string.dialog_resume_record_title)) },
+                text = { Text(stringResource(R.string.dialog_resume_record_content)) },
+                confirmButton = @Composable {
+                    TextButton(
+                        onClick = {
+                            onRecordClick
+                        },
+                    ) { Text(stringResource(R.string.dialog_resume_record_btn_confirm)) }
+                },
+                dismissButton = @Composable {
+                    TextButton(
+                        onClick = {
+                            viewModel.removeRecordingVoice()
+                            dialogState = false
+                        },
+                    ) { Text(stringResource(R.string.dialog_resume_record_btn_dismiss)) }
+                }
+            )
         }
     }
 
