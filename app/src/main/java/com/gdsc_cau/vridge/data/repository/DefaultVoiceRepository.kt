@@ -3,9 +3,9 @@ package com.gdsc_cau.vridge.data.repository
 import android.content.Context
 import com.gdsc_cau.vridge.data.api.VridgeApi
 import com.gdsc_cau.vridge.data.database.FileStorage
-import com.gdsc_cau.vridge.data.database.InfoDatabase
 import com.gdsc_cau.vridge.data.dto.RecordingDTO
 import com.gdsc_cau.vridge.data.dto.SynthDTO
+import com.gdsc_cau.vridge.data.dto.UidDTO
 import com.gdsc_cau.vridge.data.dto.VoiceDTO
 import com.gdsc_cau.vridge.data.models.Voice
 import com.gdsc_cau.vridge.ui.util.InvalidUidException
@@ -22,7 +22,6 @@ class DefaultVoiceRepository
 constructor(
     private val api: VridgeApi,
     private val storage: FileStorage,
-    private val database: InfoDatabase,
     private val auth: FirebaseAuth,
     @ApplicationContext private val context: Context
 ) : VoiceRepository {
@@ -92,6 +91,13 @@ constructor(
         val uid = getUid() ?: throw InvalidUidException()
 
         return api.getVoiceList(uid).voiceList
+    }
+
+    override suspend fun removeRecordingVoice(): Boolean {
+        val uid = getUid() ?: throw InvalidUidException()
+        api.removeRecordingVoice(UidDTO(uid))
+
+        return true
     }
 
     private fun getUid(): String? {
