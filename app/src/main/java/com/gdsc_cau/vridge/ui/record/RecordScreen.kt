@@ -119,7 +119,7 @@ fun RecordScreen(
 
     ) {
         VridgeTopBar(
-            title = "Voice Recording",
+            title = stringResource(R.string.record_title),
             type = TopBarType.CLOSE,
             onBackClick = onBackClick
         )
