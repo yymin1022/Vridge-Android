@@ -14,19 +14,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gdsc_cau.vridge.R
 import com.gdsc_cau.vridge.ui.theme.IconBg
 import com.gdsc_cau.vridge.ui.theme.OnPrimary
+import com.gdsc_cau.vridge.ui.theme.VridgeTheme
 
 @Composable
 fun LoginScreen(onTryLogin: () -> Unit) {
     Column(
         modifier =
-            Modifier
-                .background(IconBg)
-                .padding(all = 20.dp),
+        Modifier
+            .background(IconBg)
+            .padding(all = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceEvenly
     ) {
@@ -61,10 +63,18 @@ fun LoginButton(
 ) {
     Image(
         modifier =
-            Modifier
-                .fillMaxWidth(fraction = 0.5f)
-                .clickable { onTryLogin() },
+        Modifier
+            .fillMaxWidth(fraction = 0.5f)
+            .clickable { onTryLogin() },
         painter = painterResource(id = R.drawable.btn_signin_google),
         contentDescription = "Sign in with Google"
     )
+}
+
+@Preview
+@Composable
+fun LoginScreenPreview() {
+    VridgeTheme {
+        LoginScreen(onTryLogin = {})
+    }
 }
