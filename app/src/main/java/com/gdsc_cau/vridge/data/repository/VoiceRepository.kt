@@ -11,4 +11,5 @@ interface VoiceRepository {
     suspend fun finishRecord(name: String, pitch: Int): Boolean
     suspend fun synthesize(vid: List<String>, name: String, pitch: Int): Voice
     suspend fun getVoiceList(): List<Voice>
+    suspend fun removeRecordingVoice(): Boolean
 }

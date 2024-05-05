@@ -58,6 +58,12 @@ class DefaultUserRepository @Inject constructor(
         }
     }
 
+    override suspend fun getRecordingStatus(): Boolean {
+        val uid = getUid()
+        val result = api.getRecordingStatus(uid)
+        return result.index != 0 && result.vid.isNotEmpty()
+    }
+
     override suspend fun setMessageToken(token: String): Boolean {
         return dataSource.setMessageToken(token)
     }
