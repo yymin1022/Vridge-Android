@@ -11,6 +11,7 @@ import com.gdsc_cau.vridge.data.models.User
 import com.gdsc_cau.vridge.data.models.Voice
 import com.gdsc_cau.vridge.data.models.VoiceListResponse
 import kotlinx.serialization.json.JsonObject
+import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -59,14 +60,14 @@ interface VridgeApi {
     ): JsonObject
 
     @POST("api/v1/voice/finish")
-    suspend fun finishRecordingVoice(
+    fun finishRecordingVoice(
         @Body data: VoiceDTO
-    ): JsonObject
+    ): Call<Void>
 
     @POST("api/v1/voice/synthesize")
-    suspend fun synthesizeVoice(
+    fun synthesizeVoice(
         @Body data: SynthDTO
-    ): Voice
+    ): Call<Void>
 
     @POST("api/v1/tts/create")
     suspend fun createTts(
